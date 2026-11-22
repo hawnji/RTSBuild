@@ -366,8 +366,8 @@ namespace RTS.Sim
                 }
                 else if (def.OnWater) { radius = 24; spacing = 0; }
                 else if (def.Role == BuildingRole.Silo || def.Role == BuildingRole.Power) near = _baseCenter - (EnemyCenter() - _baseCenter).Normalized * 4f;
-                var spot = _w.Production.FindPlacement(PlayerId, def, near, radius, _rng, spacing);
-                if (!spot.HasValue && spacing > 0) spot = _w.Production.FindPlacement(PlayerId, def, _baseCenter, 22, _rng, 0);
+                var spot = _w.Production.FindPlacement(PlayerId, def, near, radius, _rng, spacing, keepOpen: true);
+                if (!spot.HasValue && spacing > 0) spot = _w.Production.FindPlacement(PlayerId, def, _baseCenter, 22, _rng, 0, keepOpen: true);
                 if (spot.HasValue) _w.Commands.Place(PlayerId, qt, spot.Value, false);
                 else _w.Commands.Cancel(PlayerId, qt, id); // impossible to place: refund and move on
             }
@@ -420,6 +420,8 @@ namespace RTS.Sim
             // Save up for the missing harvester instead of spending everything on the army.
             if (needHarvester && harvesters == 0) reserve += hvDef.Cost;
             else if (needHarvester) reserve += hvDef.Cost * 0.4f;
+            int army = _w.UnitsOf(PlayerId).Count(u => u.IsArmed && !u.Def.Has(UnitAbility.Harvester));
+            if (army >= Profile.MaxArmy) return;
             foreach (var qt in new[] { ProductionQueueType.Infantry, ProductionQueueType.Vehicles, ProductionQueueType.Aircraft, ProductionQueueType.Naval })
             {
                 var q = me.Queues[(int)qt];
@@ -705,6 +707,13 @@ namespace RTS.Sim
                     _w.Commands.AttackMove(idle, PlayerId, dest);
                 }
                 if (Profile.FocusFire) FocusFire(attackers);
+                // Reinforce the running attack with a sizeable rally group instead of letting it pile up at home.
+                var reinforcements = UnitsWithRole(Role.Rally).Where(u => !u.IsAir && u.MoveClass != MoveClass.Naval).ToList();
+                if (reinforcements.Sum(u => (float)u.Def.Cost) >= Profile.AttackMinValue * 0.5f)
+                {
+                    foreach (var u in reinforcements) _roles[u.Id] = Role.Attack;
+                    _w.Commands.AttackMove(reinforcements.Select(u => u.Id), PlayerId, _attackTarget);
+                }
                 return;
             }
             if (_w.Time < _nextAttack)
@@ -721,6 +730,10 @@ namespace RTS.Sim
             if (_w.Time > _nextAttack + Profile.AttackInterval * 0.5f) need *= 0.6f;
             if (_w.Time > _nextAttack + Profile.AttackInterval * 1.5f) need *= 0.6f;
             if (value < need && !(board.AttackLaunchTime > _w.Time - 20 && value > need * 0.5f)) return;
+            // Smarter AIs hold back while the enemy army they have seen is clearly stronger (unless an ally is attacking or the army is maxed).
+            if (Profile.WeighsOdds && value < Intel.EnemyArmyValue * 0.8f && !(board.AttackLaunchTime > _w.Time - 20)
+                && _w.UnitsOf(PlayerId).Count(u => u.IsArmed && !u.Def.Has(UnitAbility.Harvester)) < Profile.MaxArmy * 0.9f
+                && _w.Time < _nextAttack + Profile.AttackInterval * 2.5f) return;
             // Choose target (shared with team).
             int targetOwner = board.TargetOwner;
             if (targetOwner < 0 || _w.GetPlayer(targetOwner).Defeated || _w.Time - board.TargetSetTime > 300)

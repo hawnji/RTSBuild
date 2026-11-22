@@ -244,7 +244,11 @@ namespace RTS.Sim
                         if (u.Cargo >= u.Def.HarvestCapacity) { u.HState = HarvestState.Returning; return; }
                         if ((_w.Tick + u.Id) % 5 != 0) return;
                         var from = u.HasLastHarvest ? u.LastHarvestPos : u.Pos;
-                        var cell = FindOre(from, u.Owner, 14);
+                        // Prefer substantial ore within a reasonable trip; fall back to thin regrowth only when nothing better is near.
+                        int rich = MapData.MaxOrePerCell / 4;
+                        var cell = FindOre(from, u.Owner, 14, rich);
+                        if (!cell.HasValue) cell = FindOre(u.Pos, u.Owner, 28, rich);
+                        if (!cell.HasValue) cell = FindOre(from, u.Owner, 14);
                         if (!cell.HasValue && u.HasLastHarvest) cell = FindOre(u.Pos, u.Owner, 14);
                         if (!cell.HasValue) cell = FindOre(u.Pos, u.Owner, 60);
                         if (!cell.HasValue)
@@ -359,28 +363,33 @@ namespace RTS.Sim
         }
 
         /// <summary>Nearest harvestable ore cell; avoids cells occupied by other harvesters when possible.</summary>
-        public Int2? FindOre(Vec2 from, int owner, int maxRadius)
+        /// <summary>
+        /// Picks the ore cell to harvest next: near cells first, but rich cells are worth a slightly longer trip than
+        /// the thin regrowth fringe, so harvesters move on to fresh fields instead of crawling over depleted ones.
+        /// </summary>
+        public Int2? FindOre(Vec2 from, int owner, int maxRadius, int minOre = 1)
         {
             var m = _w.Map;
             var c = Int2.Floor(from);
-            Int2? fallback = null;
-            for (int r = 0; r <= maxRadius; r++)
-            {
-                Int2? best = null; float bd = float.MaxValue;
-                for (int dy = -r; dy <= r; dy++)
-                    for (int dx = -r; dx <= r; dx++)
-                    {
-                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != r) continue;
-                        int x = c.X + dx, y = c.Y + dy;
-                        if (!m.InBounds(x, y) || m.Ore[m.Index(x, y)] <= 0) continue;
-                        if (!_w.Passable(x, y, MoveClass.Vehicle)) continue;
-                        float d = dx * dx + dy * dy;
-                        if (HarvesterAt(x, y, owner)) { if (!fallback.HasValue) fallback = new Int2(x, y); continue; }
-                        if (d < bd) { bd = d; best = new Int2(x, y); }
-                    }
-                if (best.HasValue) return best;
-            }
-            return fallback;
+            Int2? best = null, fallback = null; float bestScore = float.MaxValue, fallbackD = float.MaxValue;
+            int r2max = maxRadius * maxRadius;
+            for (int dy = -maxRadius; dy <= maxRadius; dy++)
+                for (int dx = -maxRadius; dx <= maxRadius; dx++)
+                {
+                    int d2 = dx * dx + dy * dy;
+                    if (d2 > r2max) continue;
+                    int x = c.X + dx, y = c.Y + dy;
+                    if (!m.InBounds(x, y)) continue;
+                    int ore = m.Ore[m.Index(x, y)];
+                    if (ore < minOre || ore <= 0 || !_w.Passable(x, y, MoveClass.Vehicle)) continue;
+                    float d = (float)Math.Sqrt(d2);
+                    float richness = Math.Min(1f, ore / (float)MapData.MaxOrePerCell);
+                    float score = d + (1f - richness) * 7f;
+                    if (score >= bestScore && d >= fallbackD) continue;   // cheap reject before the spatial query
+                    if (HarvesterAt(x, y, owner)) { if (d < fallbackD) { fallbackD = d; fallback = new Int2(x, y); } continue; }
+                    if (score < bestScore) { bestScore = score; best = new Int2(x, y); }
+                }
+            return best ?? fallback;
         }
 
         bool HarvesterAt(int x, int y, int owner)

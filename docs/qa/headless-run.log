@@ -1,136 +1,136 @@
 # Headless QA run (all)  units=76 buildings=65 weapons=77
 
 ## Skirmish 1v1 AI vs AI
-  twin_rivers (96x96, Easy vs Normal): ended at 12.7 min, winner team 1 Dominion Normal(Dominion), peak units 112, 0.14 ms/tick
-      Alliance Easy  Alliance  built u64/b11 lost u78/b11 killed u46/b0 harvested 36399 spent 46397 bldgs 0 units 0
-      Dominion Normal Dominion  built u82/b20 lost u47/b0 killed u78/b11 harvested 62182 spent 72183 bldgs 20 units 42
-  dust_basin (104x84, Normal vs Hard): ended at 12.4 min, winner team 1 Dominion Hard(Dominion), peak units 62, 0.24 ms/tick
-      Alliance Normal Alliance  built u34/b18 lost u52/b18 killed u41/b0 harvested 24500 spent 34497 bldgs 0 units 1
-      Dominion Hard  Dominion  built u76/b22 lost u45/b0 killed u52/b18 harvested 56512 spent 66477 bldgs 23 units 38
-  frostbite_pass (88x112, Hard vs Brutal): ended at 13.9 min, winner team 1 Dominion Brutal(Dominion), peak units 82, 0.35 ms/tick
-      Alliance Hard  Alliance  built u77/b23 lost u100/b23 killed u76/b1 harvested 51366 spent 61368 bldgs 0 units 0
-      Dominion Brutal Dominion  built u145/b31 lost u76/b1 killed u98/b23 harvested 115216 spent 125226 bldgs 31 units 76
-  iron_strait (112x96, Brutal vs Easy): ended at 15.0 min, winner team 0 Alliance Brutal(Alliance), peak units 95, 0.12 ms/tick
-      Alliance Brutal Alliance  built u161/b32 lost u88/b0 killed u105/b14 harvested 142828 spent 152565 bldgs 33 units 79
-      Dominion Easy  Dominion  built u93/b14 lost u106/b14 killed u87/b0 harvested 39999 spent 50000 bldgs 0 units 2
-  crossroads (128x128, Easy vs Normal): ended at 14.7 min, winner team 0 Alliance Easy(Alliance), peak units 103, 0.06 ms/tick
-      Alliance Easy  Alliance  built u89/b10 lost u53/b0 killed u103/b20 harvested 45498 spent 55498 bldgs 10 units 42
-      Dominion Normal Dominion  built u86/b20 lost u105/b20 killed u48/b0 harvested 61385 spent 70161 bldgs 0 units 4
-  scorched_plateau (128x112, Normal vs Hard): ended at 32.2 min, winner team 0 Alliance Normal(Alliance), peak units 52, 0.38 ms/tick
-      Alliance Normal Alliance  built u50/b22 lost u31/b0 killed u84/b28 harvested 43749 spent 53388 bldgs 22 units 25
-      Dominion Hard  Dominion  built u61/b26 lost u84/b28 killed u31/b0 harvested 52812 spent 62813 bldgs 0 units 4
-  glacier_bay (136x120, Hard vs Brutal): ended at 13.5 min, winner team 1 Dominion Brutal(Dominion), peak units 88, 0.09 ms/tick
-      Alliance Hard  Alliance  built u83/b27 lost u104/b28 killed u82/b0 harvested 61551 spent 71556 bldgs 0 units 5
-      Dominion Brutal Dominion  built u160/b32 lost u86/b0 killed u101/b28 harvested 127660 spent 136844 bldgs 33 units 81
+  twin_rivers (96x96, Easy vs Normal): ended at 10.7 min, winner team 1 Dominion Normal(Dominion), peak units 67, 0.15 ms/tick
+      Alliance Easy  Alliance  built u34/b24 lost u51/b24 killed u28/b0 harvested 32056 spent 32343 bldgs 0 units 0
+      Dominion Normal Dominion  built u70/b23 lost u28/b0 killed u51/b24 harvested 52198 spent 61129 bldgs 23 units 49
+  dust_basin (104x84, Normal vs Hard): ended at 7.8 min, winner team 1 Dominion Hard(Dominion), peak units 69, 0.07 ms/tick
+      Alliance Normal Alliance  built u25/b15 lost u41/b15 killed u23/b0 harvested 16100 spent 26098 bldgs 0 units 1
+      Dominion Hard  Dominion  built u59/b21 lost u25/b0 killed u41/b15 harvested 41052 spent 50845 bldgs 21 units 41
+  frostbite_pass (88x112, Hard vs Brutal): ended at 14.4 min, winner team 1 Dominion Brutal(Dominion), peak units 93, 0.14 ms/tick
+      Alliance Hard  Alliance  built u96/b26 lost u122/b27 killed u124/b0 harvested 71733 spent 81740 bldgs 0 units 0
+      Dominion Brutal Dominion  built u197/b32 lost u126/b0 killed u119/b27 harvested 148289 spent 158293 bldgs 33 units 78
+  iron_strait (112x96, Brutal vs Easy): ended at 9.5 min, winner team 0 Alliance Brutal(Alliance), peak units 79, 0.10 ms/tick
+      Alliance Brutal Alliance  built u109/b26 lost u41/b0 killed u65/b16 harvested 88647 spent 98619 bldgs 26 units 74
+      Dominion Easy  Dominion  built u51/b16 lost u66/b16 killed u41/b0 harvested 23200 spent 33199 bldgs 0 units 0
+  crossroads (128x128, Easy vs Normal): ended at 9.7 min, winner team 1 Dominion Normal(Dominion), peak units 66, 0.05 ms/tick
+      Alliance Easy  Alliance  built u23/b18 lost u36/b18 killed u18/b0 harvested 30099 spent 23876 bldgs 0 units 1
+      Dominion Normal Dominion  built u55/b19 lost u19/b0 killed u36/b18 harvested 44459 spent 53831 bldgs 19 units 43
+  scorched_plateau (128x112, Normal vs Hard): ended at 12.4 min, winner team 0 Alliance Normal(Alliance), peak units 73, 0.05 ms/tick
+      Alliance Normal Alliance  built u51/b18 lost u33/b0 killed u43/b17 harvested 35218 spent 45219 bldgs 18 units 24
+      Dominion Hard  Dominion  built u26/b17 lost u43/b17 killed u33/b0 harvested 21031 spent 28580 bldgs 0 units 4
+  glacier_bay (136x120, Hard vs Brutal): ended at 8.6 min, winner team 1 Dominion Brutal(Dominion), peak units 77, 0.07 ms/tick
+      Alliance Hard  Alliance  built u53/b21 lost u72/b21 killed u48/b0 harvested 36815 spent 46816 bldgs 0 units 3
+      Dominion Brutal Dominion  built u109/b27 lost u49/b0 killed u72/b21 harvested 96043 spent 91827 bldgs 29 units 67
 
 ## Difficulty ladder (twin_rivers, Alliance vs Dominion)
-  Easy vs Hard: ended at 11.6 min, winner team 1 D-Hard(Dominion), peak units 90, 0.06 ms/tick
-      A-Easy         Alliance  built u70/b10 lost u82/b10 killed u49/b0 harvested 34299 spent 44298 bldgs 0 units 2
-      D-Hard         Dominion  built u80/b24 lost u50/b0 killed u81/b10 harvested 67179 spent 77183 bldgs 26 units 37
-  Hard vs Easy: ended at 18.4 min, winner team 1 D-Easy(Dominion), peak units 97, 0.07 ms/tick
-      A-Hard         Alliance  built u127/b30 lost u153/b32 killed u65/b1 harvested 111501 spent 121507 bldgs 0 units 4
-      D-Easy         Dominion  built u105/b12 lost u65/b2 killed u153/b32 harvested 52912 spent 61881 bldgs 10 units 47
-  Normal vs Brutal: ended at 13.9 min, winner team 1 D-Brutal(Dominion), peak units 93, 0.08 ms/tick
-      A-Normal       Alliance  built u87/b21 lost u106/b21 killed u81/b1 harvested 60518 spent 70519 bldgs 0 units 2
-      D-Brutal       Dominion  built u139/b29 lost u83/b1 killed u102/b21 harvested 111638 spent 121639 bldgs 30 units 62
-  Brutal vs Normal: ended at 12.6 min, winner team 0 A-Brutal(Alliance), peak units 101, 0.08 ms/tick
-      A-Brutal       Alliance  built u133/b29 lost u67/b0 killed u97/b22 harvested 110528 spent 120534 bldgs 29 units 72
-      D-Normal       Dominion  built u76/b22 lost u98/b22 killed u64/b0 harvested 50222 spent 60222 bldgs 0 units 1
+  Easy vs Hard: ended at 8.2 min, winner team 1 D-Hard(Dominion), peak units 69, 0.04 ms/tick
+      A-Easy         Alliance  built u26/b16 lost u38/b16 killed u11/b0 harvested 22331 spent 24783 bldgs 0 units 2
+      D-Hard         Dominion  built u61/b20 lost u11/b0 killed u38/b16 harvested 49152 spent 59152 bldgs 20 units 57
+  Hard vs Easy: ended at 7.6 min, winner team 0 A-Hard(Alliance), peak units 71, 0.05 ms/tick
+      A-Hard         Alliance  built u63/b21 lost u21/b0 killed u43/b14 harvested 53388 spent 61627 bldgs 21 units 48
+      D-Easy         Dominion  built u28/b14 lost u43/b14 killed u18/b0 harvested 16800 spent 20310 bldgs 0 units 0
+  Normal vs Brutal: ended at 12.9 min, winner team 1 D-Brutal(Dominion), peak units 94, 0.08 ms/tick
+      A-Normal       Alliance  built u83/b22 lost u103/b22 killed u84/b1 harvested 61598 spent 71596 bldgs 0 units 1
+      D-Brutal       Dominion  built u152/b31 lost u84/b1 killed u98/b22 harvested 122043 spent 130201 bldgs 32 units 75
+  Brutal vs Normal: ended at 20.8 min, winner team 0 A-Brutal(Alliance), peak units 90, 0.09 ms/tick
+      A-Brutal       Alliance  built u237/b42 lost u182/b1 killed u115/b26 harvested 216908 spent 226878 bldgs 43 units 61
+      D-Normal       Dominion  built u93/b26 lost u116/b26 killed u180/b1 harvested 67542 spent 77541 bldgs 0 units 2
 
 ## Skirmish 2v2 AI
-  crossroads 2v2: ended at 26.1 min, winner team 0 Alliance A(Alliance)+Dominion A(Dominion), peak units 166, 0.19 ms/tick
-      Alliance A     Alliance  built u200/b37 lost u135/b3 killed u189/b35 harvested 179233 spent 187647 bldgs 36 units 71
-      Dominion A     Dominion  built u155/b28 lost u119/b4 killed u132/b24 harvested 116947 spent 126933 bldgs 24 units 43
-      Dominion B     Dominion  built u126/b40 lost u161/b41 killed u121/b0 harvested 113954 spent 123952 bldgs 0 units 0
-      Alliance B     Alliance  built u148/b24 lost u167/b24 killed u130/b7 harvested 116830 spent 126840 bldgs 0 units 6
-  scorched_plateau 2v2: ended at 21.7 min, winner team 1 Dominion B(Dominion)+Alliance B(Alliance), peak units 95, 0.16 ms/tick
-      Alliance A     Alliance  built u32/b27 lost u54/b28 killed u34/b0 harvested 33674 spent 43675 bldgs 0 units 0
-      Dominion A     Dominion  built u50/b20 lost u68/b20 killed u22/b0 harvested 36799 spent 45997 bldgs 0 units 4
-      Dominion B     Dominion  built u52/b26 lost u32/b0 killed u56/b12 harvested 51813 spent 61813 bldgs 28 units 27
-      Alliance B     Alliance  built u42/b21 lost u25/b0 killed u66/b36 harvested 37477 spent 46847 bldgs 21 units 23
-  glacier_bay 2v2: ended at 15.6 min, winner team 0 Alliance A(Alliance)+Dominion A(Dominion), peak units 162, 0.22 ms/tick
-      Alliance A     Alliance  built u136/b29 lost u63/b2 killed u79/b18 harvested 106451 spent 115714 bldgs 29 units 79
-      Dominion A     Dominion  built u99/b23 lost u59/b0 killed u125/b27 harvested 74787 spent 84655 bldgs 23 units 47
-      Dominion B     Dominion  built u70/b24 lost u94/b24 killed u64/b0 harvested 45172 spent 55172 bldgs 0 units 0
-      Alliance B     Alliance  built u89/b21 lost u111/b21 killed u56/b2 harvested 63697 spent 73699 bldgs 0 units 0
+  crossroads 2v2: ended at 13.3 min, winner team 1 Dominion B(Dominion)+Alliance B(Alliance), peak units 211, 0.23 ms/tick
+      Alliance A     Alliance  built u91/b27 lost u116/b27 killed u64/b2 harvested 81196 spent 91197 bldgs 0 units 1
+      Dominion A     Dominion  built u62/b24 lost u84/b24 killed u32/b0 harvested 52091 spent 62096 bldgs 0 units 0
+      Dominion B     Dominion  built u120/b29 lost u64/b0 killed u116/b32 harvested 94452 spent 104445 bldgs 30 units 63
+      Alliance B     Alliance  built u74/b25 lost u32/b2 killed u79/b19 harvested 71801 spent 77927 bldgs 23 units 48
+  scorched_plateau 2v2: ended at 37.4 min, winner team 1 Dominion B(Dominion)+Alliance B(Alliance), peak units 105, 0.25 ms/tick
+      Alliance A     Alliance  built u67/b30 lost u92/b30 killed u55/b0 harvested 73497 spent 80697 bldgs 0 units 2
+      Dominion A     Dominion  built u99/b29 lost u127/b30 killed u82/b5 harvested 82577 spent 92571 bldgs 0 units 0
+      Dominion B     Dominion  built u110/b32 lost u80/b1 killed u110/b28 harvested 98405 spent 108398 bldgs 32 units 37
+      Alliance B     Alliance  built u88/b26 lost u62/b4 killed u106/b32 harvested 79348 spent 89354 bldgs 22 units 32
+  glacier_bay 2v2: ended at 17.7 min, winner team 1 Dominion B(Dominion)+Alliance B(Alliance), peak units 196, 0.26 ms/tick
+      Alliance A     Alliance  built u111/b29 lost u135/b31 killed u69/b3 harvested 105933 spent 115933 bldgs 0 units 5
+      Dominion A     Dominion  built u85/b26 lost u110/b26 killed u83/b1 harvested 71641 spent 81640 bldgs 0 units 0
+      Dominion B     Dominion  built u135/b31 lost u86/b0 killed u114/b23 harvested 108502 spent 118155 bldgs 31 units 56
+      Alliance B     Alliance  built u105/b28 lost u67/b4 killed u125/b34 harvested 94496 spent 104335 bldgs 24 units 44
 
 ## Campaign mission smoke runs (idle player, 8 min each)
-  intro  Prologue                     VICTORY  0.7 min  fired 10/10  []  0.02 ms/tick
+  intro  Prologue                     VICTORY  0.7 min  fired 10/10  []  0.01 ms/tick
       save/load ok (64 KB), restored world ran 60 s
   ca01   First Light                  running  8.0 min  fired 3/7  [base:Active, outpost:Active, derrick:Active]  0.01 ms/tick
       save/load ok (105 KB), restored world ran 60 s
   ca02   Holding the Line             defeat   6.4 min  fired 7/16  [radar:Failed, hold:Active, battery:Active]  0.01 ms/tick
       save/load ok (114 KB), restored world ran 60 s
-  ca03   Broken Column                running  8.0 min  fired 2/6  [reach:Active, extract:Active, keep:Active]  0.02 ms/tick
+  ca03   Broken Column                running  8.0 min  fired 2/6  [reach:Active, extract:Active, keep:Active]  0.01 ms/tick
       save/load ok (127 KB), restored world ran 60 s
-  ca04   Supply Lines                 running  8.0 min  fired 4/6  [depots:Active, convoy:Failed]  0.02 ms/tick
+  ca04   Supply Lines                 running  8.0 min  fired 4/6  [depots:Active, convoy:Failed]  0.01 ms/tick
       save/load ok (140 KB), restored world ran 60 s
-  ca05   Iron Convoy                  running  8.0 min  fired 4/7  [escort:Active, ambush:Active]  0.02 ms/tick
+  ca05   Iron Convoy                  running  8.0 min  fired 4/7  [escort:Active, ambush:Active]  0.01 ms/tick
       save/load ok (121 KB), restored world ran 60 s
   ca06   Stolen Fire                  running  8.0 min  fired 2/5  [capture:Active, keep:Active, derricks:Active]  0.02 ms/tick
-      save/load ok (150 KB), restored world ran 60 s
-  ca07   Bridgehead                   running  8.0 min  fired 0/16  [seize:Active, hold:Hidden, base:Active]  0.05 ms/tick
-      save/load ok (154 KB), restored world ran 60 s
-  ca08   Silent Coast                 running  8.0 min  fired 1/5  [docks:Active, guns:Active, land:Hidden, ebase:Active]  0.05 ms/tick
-      save/load ok (150 KB), restored world ran 60 s
+      save/load ok (155 KB), restored world ran 60 s
+  ca07   Bridgehead                   running  8.0 min  fired 0/16  [seize:Active, hold:Hidden, base:Active]  0.04 ms/tick
+      save/load ok (149 KB), restored world ran 60 s
+  ca08   Silent Coast                 running  8.0 min  fired 1/5  [docks:Active, guns:Active, land:Hidden, ebase:Active]  0.04 ms/tick
+      save/load ok (146 KB), restored world ran 60 s
   ca09   Iron Marshal                 running  8.0 min  fired 5/10  [barr:Active, escape:Active, base:Active]  0.02 ms/tick
-      save/load ok (141 KB), restored world ran 60 s
-  ca10   Thunder Over Kesh            running  8.0 min  fired 0/2  [west:Active, east:Active]  0.09 ms/tick
-      save/load ok (227 KB), restored world ran 60 s
+      save/load ok (142 KB), restored world ran 60 s
+  ca10   Thunder Over Kesh            running  8.0 min  fired 0/2  [west:Active, east:Active]  0.10 ms/tick
+      save/load ok (221 KB), restored world ran 60 s
   ca11   Hammer and Anvil             running  8.0 min  fired 3/6  [destroy:Active, fort:Active]  0.05 ms/tick
-      save/load ok (188 KB), restored world ran 60 s
-  ca12   Ironhold                     running  8.0 min  fired 1/4  [all:Active, silo:Active, ally:Active]  0.19 ms/tick
-      save/load ok (300 KB), restored world ran 60 s
-  id01   Steel Dawn                   running  8.0 min  fired 2/4  [cross:Active, garrison:Active]  0.02 ms/tick
+      save/load ok (189 KB), restored world ran 60 s
+  ca12   Ironhold                     running  8.0 min  fired 1/4  [all:Active, silo:Active, ally:Active]  0.20 ms/tick
+      save/load ok (295 KB), restored world ran 60 s
+  id01   Steel Dawn                   running  8.0 min  fired 2/4  [cross:Active, garrison:Active]  0.01 ms/tick
       save/load ok (113 KB), restored world ran 60 s
   id02   The Foundry                  running  8.0 min  fired 5/12  [harvest:Active, derrick:Active, ebase:Active]  0.02 ms/tick
-      save/load ok (143 KB), restored world ran 60 s
+      save/load ok (146 KB), restored world ran 60 s
   id03   Crossing the Varn            running  8.0 min  fired 1/4  [relays:Active, ebase:Active]  0.03 ms/tick
-      save/load ok (162 KB), restored world ran 60 s
+      save/load ok (158 KB), restored world ran 60 s
   id04   Night Raid                   running  8.0 min  fired 1/5  [radar:Active, power:Active, barracks:Active]  0.01 ms/tick
       save/load ok (124 KB), restored world ran 60 s
-  id05   Kettle Pass                  defeat   6.8 min  fired 10/19  [hold:Active, hq:Failed]  0.01 ms/tick
+  id05   Kettle Pass                  defeat   6.7 min  fired 10/19  [hold:Active, hq:Failed]  0.01 ms/tick
       save/load ok (134 KB), restored world ran 60 s
-  id06   Severed Wings                running  8.0 min  fired 1/3  [hangars:Active, aa:Active]  0.03 ms/tick
-      save/load ok (160 KB), restored world ran 60 s
-  id07   Iron Tide                    defeat   7.9 min  fired 0/2  [west:Active, east:Active]  0.14 ms/tick
-      save/load ok (246 KB), restored world ran 60 s
+  id06   Severed Wings                running  8.0 min  fired 1/3  [hangars:Active, aa:Active]  0.04 ms/tick
+      save/load ok (159 KB), restored world ran 60 s
+  id07   Iron Tide                    defeat   8.0 min  fired 0/2  [west:Active, east:Active]  0.13 ms/tick
+      save/load ok (233 KB), restored world ran 60 s
   id08   The Prisoners                running  8.0 min  fired 2/6  [free:Active, evac:Active, moor:Active, convoy:Failed]  0.02 ms/tick
-      save/load ok (131 KB), restored world ran 60 s
-  id09   Colossus Road                running  8.0 min  fired 1/4  [escort:Active, fort:Active]  0.01 ms/tick
+      save/load ok (129 KB), restored world ran 60 s
+  id09   Colossus Road                running  8.0 min  fired 1/4  [escort:Active, fort:Active]  0.02 ms/tick
       save/load ok (133 KB), restored world ran 60 s
-  id10   Black Harbor                 running  8.0 min  fired 1/3  [yards:Active, ebase:Active]  0.03 ms/tick
+  id10   Black Harbor                 running  8.0 min  fired 1/3  [yards:Active, ebase:Active]  0.02 ms/tick
       save/load ok (154 KB), restored world ran 60 s
-  id11   Eye of Helios                running  8.0 min  fired 1/4  [helios:Active, fort:Active]  0.04 ms/tick
-      save/load ok (186 KB), restored world ran 60 s
-  id12   Meridian Falls               running  8.0 min  fired 1/6  [hq:Active, convoy:Hidden, helios:Active]  0.10 ms/tick
-      save/load ok (278 KB), restored world ran 60 s
+  id11   Eye of Helios                running  8.0 min  fired 1/4  [helios:Active, fort:Active]  0.03 ms/tick
+      save/load ok (185 KB), restored world ran 60 s
+  id12   Meridian Falls               running  8.0 min  fired 1/6  [hq:Active, convoy:Hidden, helios:Active]  0.15 ms/tick
+      save/load ok (284 KB), restored world ran 60 s
 
 ## Campaign missions with autopilot AI for the player (12 min each)
-  ca01   First Light                  VICTORY  9.2 min  fired 6/7  [base:Completed, outpost:Completed, derrick:Active]  0.03 ms/tick
-  ca02   Holding the Line             running  12.0 min  fired 14/16  [radar:Active, hold:Active, battery:Completed]  0.05 ms/tick
+  ca01   First Light                  VICTORY  9.1 min  fired 7/7  [base:Completed, outpost:Completed, derrick:Completed]  0.03 ms/tick
+  ca02   Holding the Line             running  12.0 min  fired 13/16  [radar:Active, hold:Active, battery:Active]  0.06 ms/tick
   ca03   Broken Column                defeat   1.8 min  fired 5/6  [reach:Completed, extract:Active, keep:Failed]  0.02 ms/tick
-  ca04   Supply Lines                 running  12.0 min  fired 4/6  [depots:Active, convoy:Failed]  0.03 ms/tick
-  ca05   Iron Convoy                  defeat   3.2 min  fired 4/7  [escort:Failed, ambush:Active]  0.03 ms/tick
-  ca06   Stolen Fire                  defeat   9.3 min  fired 3/5  [capture:Active, keep:Failed, derricks:Active]  0.08 ms/tick
+  ca04   Supply Lines                 running  12.0 min  fired 4/6  [depots:Active, convoy:Failed]  0.01 ms/tick
+  ca05   Iron Convoy                  defeat   3.2 min  fired 4/7  [escort:Failed, ambush:Active]  0.01 ms/tick
+  ca06   Stolen Fire                  defeat   9.9 min  fired 3/5  [capture:Active, keep:Failed, derricks:Active]  0.05 ms/tick
   ca07   Bridgehead                   running  12.0 min  fired 0/16  [seize:Active, hold:Hidden, base:Active]  0.08 ms/tick
-  ca08   Silent Coast                 defeat   9.6 min  fired 1/5  [docks:Active, guns:Active, land:Hidden, ebase:Active]  0.08 ms/tick
-  ca09   Iron Marshal                 defeat   9.7 min  fired 8/10  [barr:Active, escape:Failed, base:Completed]  0.07 ms/tick
-  ca10   Thunder Over Kesh            defeat   10.1 min  fired 0/2  [west:Active, east:Active]  0.18 ms/tick
-  ca11   Hammer and Anvil             VICTORY  9.3 min  fired 4/6  [destroy:Completed, fort:Active]  0.11 ms/tick
-  ca12   Ironhold                     defeat   8.8 min  fired 1/4  [all:Active, silo:Active, ally:Active]  0.33 ms/tick
+  ca08   Silent Coast                 defeat   9.9 min  fired 1/5  [docks:Active, guns:Active, land:Hidden, ebase:Active]  0.05 ms/tick
+  ca09   Iron Marshal                 defeat   9.7 min  fired 7/10  [barr:Active, escape:Failed, base:Active]  0.08 ms/tick
+  ca10   Thunder Over Kesh            defeat   10.0 min  fired 0/2  [west:Active, east:Active]  0.12 ms/tick
+  ca11   Hammer and Anvil             running  12.0 min  fired 3/6  [destroy:Active, fort:Active]  0.08 ms/tick
+  ca12   Ironhold                     defeat   11.0 min  fired 2/4  [all:Active, silo:Active, ally:Failed]  0.28 ms/tick
   id01   Steel Dawn                   running  12.0 min  fired 2/4  [cross:Active, garrison:Active]  0.02 ms/tick
-  id02   The Foundry                  VICTORY  4.3 min  fired 3/12  [harvest:Completed, derrick:Active, ebase:Active]  0.02 ms/tick
-  id03   Crossing the Varn            running  12.0 min  fired 2/4  [relays:Active, ebase:Completed]  0.07 ms/tick
-  id04   Night Raid                   running  12.0 min  fired 1/5  [radar:Active, power:Active, barracks:Active]  0.01 ms/tick
-  id05   Kettle Pass                  running  12.0 min  fired 15/19  [hold:Active, hq:Active]  0.05 ms/tick
-  id06   Severed Wings                VICTORY  10.8 min  fired 3/3  [hangars:Completed, aa:Completed]  0.08 ms/tick
-  id07   Iron Tide                    defeat   9.2 min  fired 0/2  [west:Active, east:Active]  0.22 ms/tick
-  id08   The Prisoners                defeat   7.7 min  fired 4/6  [free:Completed, evac:Active, moor:Failed, convoy:Failed]  0.05 ms/tick
+  id02   The Foundry                  VICTORY  4.2 min  fired 3/12  [harvest:Completed, derrick:Active, ebase:Active]  0.02 ms/tick
+  id03   Crossing the Varn            running  12.0 min  fired 2/4  [relays:Active, ebase:Completed]  0.06 ms/tick
+  id04   Night Raid                   running  12.0 min  fired 1/5  [radar:Active, power:Active, barracks:Active]  0.02 ms/tick
+  id05   Kettle Pass                  running  12.0 min  fired 15/19  [hold:Active, hq:Active]  0.04 ms/tick
+  id06   Severed Wings                VICTORY  11.2 min  fired 3/3  [hangars:Completed, aa:Completed]  0.07 ms/tick
+  id07   Iron Tide                    defeat   9.2 min  fired 0/2  [west:Active, east:Active]  0.20 ms/tick
+  id08   The Prisoners                running  12.0 min  fired 3/6  [free:Completed, evac:Active, moor:Active, convoy:Failed]  0.04 ms/tick
   id09   Colossus Road                running  12.0 min  fired 1/4  [escort:Active, fort:Active]  0.02 ms/tick
-  id10   Black Harbor                 running  12.0 min  fired 1/3  [yards:Active, ebase:Active]  0.70 ms/tick
+  id10   Black Harbor                 running  12.0 min  fired 1/3  [yards:Active, ebase:Active]  1.20 ms/tick
   id11   Eye of Helios                VICTORY  11.7 min  fired 3/4  [helios:Completed, fort:Active]  0.07 ms/tick
-  id12   Meridian Falls               VICTORY  10.2 min  fired 3/6  [hq:Completed, convoy:Active, helios:Active]  0.18 ms/tick
+  id12   Meridian Falls               running  12.0 min  fired 3/6  [hq:Active, convoy:Failed, helios:Active]  0.18 ms/tick
 
 ## Save/load round trips
   twin_rivers at 0 min:
@@ -142,7 +142,7 @@
   crossroads at 0 min:
       save/load ok (217 KB), restored world ran 60 s
   crossroads at 3 min:
-      save/load ok (237 KB), restored world ran 60 s
+      save/load ok (240 KB), restored world ran 60 s
   crossroads at 10 min:
       save/load ok (252 KB), restored world ran 60 s
 
@@ -155,12 +155,12 @@
   all references resolve
 
 ## Map checks (ore near each start, start reachability)
-  twin_rivers      96x96 players 2 ore 173772 s0@12,84:18468/34577 s1@83,11:18468/34577
-  dust_basin       104x84 players 2 ore 158734 s0@14,20:0/20810 s1@89,63:0/20810
-  frostbite_pass   88x112 players 2 ore 194278 s0@16,12:11751/33157 s1@71,99:11751/33157
-  iron_strait      112x96 players 2 ore 172894 s0@14,16:6484/36208 s1@97,79:6484/36208
-  crossroads       128x128 players 4 ore 416344 s0@16,16:0/60168 s1@16,111:0/60168 s2@111,16:0/60168 s3@111,111:0/60168
-  scorched_plateau 128x112 players 4 ore 413844 s0@20,24:1229/16274 s1@20,87:1229/16274 s2@107,24:1229/16274 s3@107,87:1229/16274
-  glacier_bay      136x120 players 4 ore 515576 s0@18,16:621/64749 s1@18,103:621/64749 s2@117,16:621/64749 s3@117,103:621/64749
+  twin_rivers      96x96 players 2 ore 173772 s0@12,84:18468/34577 reach30 75811/75811 s1@83,11:18468/34577 reach30 75811/75811
+  dust_basin       104x84 players 2 ore 158734 s0@14,20:0/20810 reach30 60122/60122 s1@89,63:0/20810 reach30 60122/60122
+  frostbite_pass   88x112 players 2 ore 194278 s0@16,12:11751/33157 reach30 49646/49646 s1@71,99:11751/33157 reach30 49646/49646
+  iron_strait      112x96 players 2 ore 172894 s0@14,16:6484/36208 reach30 37813/37813 s1@97,79:6484/36208 reach30 37813/37813
+  crossroads       128x128 players 4 ore 416344 s0@16,16:0/60168 reach30 70223/70223 s1@16,111:0/60168 reach30 70223/70223 s2@111,16:0/60168 reach30 70223/70223 s3@111,111:0/60168 reach30 70223/70223
+  scorched_plateau 128x112 players 4 ore 413844 s0@20,24:1229/16274 reach30 83739/83739 s1@20,87:1229/16274 reach30 83739/83739 s2@107,24:1229/16274 reach30 83739/83739 s3@107,87:1229/16274 reach30 83739/83739
+  glacier_bay      136x120 players 4 ore 515576 s0@18,16:621/64749 reach30 93423/93423 s1@18,103:621/64749 reach30 93423/93423 s2@117,16:621/64749 reach30 93423/93423 s3@117,103:621/64749 reach30 93423/93423
 
-Total failures: 0   wall time 74s
+Total failures: 0   wall time 66s

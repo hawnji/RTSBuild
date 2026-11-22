@@ -17,6 +17,8 @@ namespace RTS.Sim
         int _cur;
         readonly SimplePriorityQueue _open = new SimplePriorityQueue();
         public int SearchesThisTick;
+        public long StatSearches, StatFailed, StatExpanded;   // diagnostics
+        public Action<Int2, Int2, MoveClass, int> OnFailed;   // diagnostics hook (start, goal, class, expanded)
         int _lastTick = -1;
         public int Version;              // increments whenever structures change
         public const int SearchesPerTick = 24;
@@ -121,6 +123,7 @@ namespace RTS.Sim
                     }
                 }
             }
+            StatSearches++; StatExpanded += expanded; if (!found) { StatFailed++; OnFailed?.Invoke(start, goal, mc, expanded); }
             int end = found ? g : best;
             var raw = new List<Int2>();
             int cur = end;

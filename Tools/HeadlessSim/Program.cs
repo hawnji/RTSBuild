@@ -47,6 +47,7 @@ namespace RTS.Headless
                 if (mode == "slots") RunSlotBias();
                 if (mode == "units") UnitTable();
                 if (mode == "probe") Probe(filter);
+                if (mode == "profile") Profile(filter ?? "dust_basin", args);
                 if (mode == "trace") Trace(filter ?? "twin_rivers", args);
             }
             catch (Exception ex) { Fail("harness crashed: " + ex); }
@@ -334,6 +335,7 @@ namespace RTS.Headless
             foreach (var a in args) { if (a.StartsWith("--a=")) d1 = (AIDifficulty)Enum.Parse(typeof(AIDifficulty), a.Substring(4)); if (a.StartsWith("--b=")) d2 = (AIDifficulty)Enum.Parse(typeof(AIDifficulty), a.Substring(4)); }
             var c = new SkirmishConfig { MapId = mapId, Spectator = true };
             c.Settings.Seed = 77;
+            foreach (var a in args) if (a.StartsWith("--seed=")) c.Settings.Seed = int.Parse(a.Substring(7));
             c.Slots.Add(new SlotConfig { Faction = FactionId.Alliance, Team = 0, Color = 0, Difficulty = d1, Name = "A-" + d1 });
             c.Slots.Add(new SlotConfig { Faction = FactionId.Dominion, Team = 1, Color = 1, Difficulty = d2, Name = "D-" + d2 });
             var w = GameSetup.CreateSkirmish(c);
@@ -347,6 +349,9 @@ namespace RTS.Headless
                     var p = w.GetPlayer(ai.PlayerId);
                     var comp = w.UnitsOf(p.Id).GroupBy(u => u.DefId).Select(g => g.Key + "x" + g.Count());
                     Line($"   {p.Name}: {ai.DebugSummary()} | bldgs {w.BuildingsOf(p.Id).Count()} power {p.PowerProduced}/{p.PowerConsumed} | {string.Join(" ", comp)}");
+                    if (args.Contains("--harv"))
+                        foreach (var h in w.UnitsOf(p.Id).Where(u => u.Def.Has(UnitAbility.Harvester)))
+                            Line($"      harvester {h.Id} {h.HState} pos {h.Pos.X:F0},{h.Pos.Y:F0} cargo {h.Cargo:F0} order {h.CurrentOrder.Type} moving {h.Moving} stuck {h.StuckTimer:F1} last {h.LastHarvestPos.X:F0},{h.LastHarvestPos.Y:F0}");
                 }
             }
             Line(Stats(w));
@@ -447,6 +452,43 @@ namespace RTS.Headless
             }
         }
 
+        static void Profile(string mapId, string[] args)
+        {
+            var c = new SkirmishConfig { MapId = mapId, Spectator = true };
+            c.Settings.Seed = 1002;
+            c.Slots.Add(new SlotConfig { Faction = FactionId.Alliance, Team = 0, Color = 0, Difficulty = AIDifficulty.Normal, Name = "A" });
+            c.Slots.Add(new SlotConfig { Faction = FactionId.Dominion, Team = 1, Color = 1, Difficulty = AIDifficulty.Hard, Name = "B" });
+            var w = GameSetup.CreateSkirmish(c);
+            var names = new[] { "spatial", "ai", "economy", "production", "behavior", "movement", "combatB", "projectiles", "fires", "powers", "fog", "victory" };
+            var t = new double[names.Length]; var sw = new Stopwatch();
+            int logged = 0;
+            w.Pathfinder.OnFailed = (a, b, mc, ex) => { if (logged++ < 25 && w.Tick > 3000) Line($"    fail {a.X},{a.Y} -> {b.X},{b.Y} {mc} expanded {ex} startTerrain {w.Map.Get(a.X, a.Y)} lvl {w.Map.LevelAt(a.X, a.Y)} goalTerrain {w.Map.Get(b.X, b.Y)} lvl {w.Map.LevelAt(b.X, b.Y)} bld {(w.BuildingAtCell(b.X, b.Y)?.DefId ?? "-")}"); };
+            void M(int i, Action a) { sw.Restart(); a(); t[i] += sw.Elapsed.TotalMilliseconds; }
+            for (int k = 0; k < 12 * 900 && !w.GameOver; k++)
+            {
+                w.Tick++; w.Time += World.Dt;
+                M(0, () => w.Spatial.Rebuild(w.Units));
+                M(1, () => { foreach (var ai in w.AIs) ai.Update(); });
+                M(2, w.Economy.Update); M(3, w.Production.Update); M(4, w.Behavior.UpdateAll); M(5, w.Movement.UpdateAll);
+                M(6, w.Combat.UpdateBuildings); M(7, w.Combat.UpdateProjectiles); M(8, w.Combat.UpdateFires); M(9, w.Powers.Update);
+                M(10, () => { if (w.Tick % 3 == 0) w.Fog.Update(); });
+                for (int i = w.Units.Count - 1; i >= 0; i--) if (w.Units[i].Dead) { w.ById.Remove(w.Units[i].Id); w.Units.RemoveAt(i); }
+                for (int i = w.Buildings.Count - 1; i >= 0; i--) if (w.Buildings[i].Dead) { w.ById.Remove(w.Buildings[i].Id); w.Buildings.RemoveAt(i); }
+                M(11, w.Victory.Update);
+                w.Events.Clear();
+                if (k % 900 == 0)
+                {
+                    var p0 = w.Players[0].StartCell; var p1 = w.Players[1].StartCell;
+                    var a0 = w.Pathfinder.NearestPassable(p0, MoveClass.Vehicle, 0, 10); var a1 = w.Pathfinder.NearestPassable(p1, MoveClass.Vehicle, 1, 10);
+                    var mid = w.Pathfinder.NearestPassable(new Int2(w.Map.Width / 2, w.Map.Height / 2), MoveClass.Vehicle, 0, 20);
+                    Line($"   min {k / 900}: base0->mid {w.Production.KeepsBaseOpen(0, Catalog.Building("ca_wall"), new Int2(0, 0))} reach0 {w.Pathfinder.Reachable(a0, mid, MoveClass.Vehicle, 0)} reach1 {w.Pathfinder.Reachable(a1, mid, MoveClass.Vehicle, 1)} starts {p0.X},{p0.Y} {p1.X},{p1.Y}");
+                }
+            }
+            for (int i = 0; i < names.Length; i++) Line($"  {names[i],-12} {t[i] / Math.Max(1, w.Tick):F3} ms/tick");
+            var pf = w.Pathfinder;
+            Line($"  paths: {pf.StatSearches / (double)w.Tick:F2}/tick, failed {pf.StatFailed * 100.0 / Math.Max(1, pf.StatSearches):F0}%, avg expanded {pf.StatExpanded / (double)Math.Max(1, pf.StatSearches):F0}");
+        }
+
         static void RunMapChecks()
         {
             Line("\n## Map checks (ore near each start, start reachability)");
@@ -465,7 +507,22 @@ namespace RTS.Headless
                         int o = m.Ore[m.Index(x, y)]; float d = (float)Math.Sqrt(dx * dx + dy * dy);
                         if (d <= 12) r12 += o; if (d <= 20) r20 += o;
                     }
-                    sb.Append($" s{si}@{st.X},{st.Y}:{r12}/{r20}");
+                    // ore reachable by ground from the start within 30 cells (flood fill over passable land)
+                    var seen = new bool[m.Width * m.Height]; var q = new Queue<Int2>(); q.Enqueue(st); seen[m.Index(st.X, st.Y)] = true; int reach = 0;
+                    while (q.Count > 0)
+                    {
+                        var cc = q.Dequeue(); int ci = m.Index(cc.X, cc.Y); reach += m.Ore[ci];
+                        foreach (var dd in new[] { new Int2(1, 0), new Int2(-1, 0), new Int2(0, 1), new Int2(0, -1) })
+                        {
+                            int nx = cc.X + dd.X, ny = cc.Y + dd.Y;
+                            if (!m.InBounds(nx, ny) || seen[m.Index(nx, ny)]) continue;
+                            if (Math.Abs(nx - st.X) > 30 || Math.Abs(ny - st.Y) > 30) continue;
+                            if (!MapData.IsLandPassable(m.Cells[m.Index(nx, ny)])) continue;
+                            seen[m.Index(nx, ny)] = true; q.Enqueue(new Int2(nx, ny));
+                        }
+                    }
+                    int box = 0; for (int dy = -30; dy <= 30; dy++) for (int dx = -30; dx <= 30; dx++) { int x = st.X + dx, y = st.Y + dy; if (m.InBounds(x, y)) box += m.Ore[m.Index(x, y)]; }
+                    sb.Append($" s{si}@{st.X},{st.Y}:{r12}/{r20} reach30 {reach}/{box}");
                     if (r20 < 4000) Fail($"{spec.Id} start {si} has little ore within 20 cells ({r20})");
                 }
                 Line($"  {spec.Id,-16} {m.Width}x{m.Height} players {spec.MaxPlayers} ore {total}{sb}");
