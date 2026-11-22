@@ -153,7 +153,7 @@ namespace RTS.Client
                         }
                     var parts = ModelLibrary.ForBuilding(def, Palette.ForPlayer(me), me.ColorIndex % 7, w, h);
                     var center = new Vector3(o.X + w * 0.5f, G(o.X + w * 0.5f, o.Y + h * 0.5f), o.Y + h * 0.5f);
-                    if (parts.Body != null) Graphics.DrawMesh(parts.Body, Matrix4x4.TRS(center, Quaternion.identity, Vector3.one), Materials.Lit, 0);
+                    foreach (var piece in parts.RestPieces()) Graphics.DrawMesh(piece.Key, Matrix4x4.TRS(center + piece.Value, Quaternion.identity, Vector3.one), Materials.Lit, 0);
                     if (def.Weapons.Count > 0) RangeRing(new Vec2(center.x, center.z), Catalog.Weapons[def.Weapons[0]].Range, new Color(1f, 1f, 1f, 0.15f));
                     if (def.CountermeasureRadius > 0) RangeRing(new Vec2(center.x, center.z), def.CountermeasureRadius, new Color(0.4f, 0.8f, 1f, 0.2f));
                 }

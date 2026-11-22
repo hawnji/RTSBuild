@@ -24,7 +24,10 @@ namespace RTS.Client
         class Part
         {
             public string Name;
-            public Vector3 Pivot;
+            public AnimParent Parent;
+            public AnimKind Kind;
+            public float Param, Phase;
+            public Vector3 Pivot;            // model space
             public Vector3[] V, N;
             public Color32[] C;
             public int[] T;
@@ -121,6 +124,13 @@ namespace RTS.Client
                     m.RecalculateBounds();
                 }
                 var pivot = rot * p.Pivot;
+                if (p.Kind != AnimKind.None)
+                {
+                    // Stored pivots are in model space; animated pieces are placed relative to their parent's pivot.
+                    var parentPivot = p.Parent == AnimParent.Body ? Vector3.zero : rot * PivotOf(s, p.Parent);
+                    mp.Anim.Add(new AnimPart { Mesh = m, Parent = p.Parent, LocalPos = pivot - parentPivot, Kind = p.Kind, Param = p.Param, Phase = p.Phase });
+                    continue;
+                }
                 switch (p.Name)
                 {
                     case "Turret": mp.Turret = m; mp.TurretPos = pivot; break;
@@ -131,6 +141,13 @@ namespace RTS.Client
             }
             if (mp.Body == null) mp.Body = new Mesh();
             return mp;
+        }
+
+        static Vector3 PivotOf(Source s, AnimParent parent)
+        {
+            string n = parent.ToString();
+            foreach (var p in s.Parts) if (p.Kind == AnimKind.None && p.Name == n) return p.Pivot;
+            return Vector3.zero;
         }
 
         static bool IsTeam(Color32 c) => c.r > 250 && c.g < 5 && c.b > 250;
@@ -156,7 +173,7 @@ namespace RTS.Client
             foreach (var fp in f.Parts)
             {
                 int vc = fp.VertexCount;
-                var p = new Part { Name = fp.Name, Pivot = new Vector3(fp.Pivot[0], fp.Pivot[1], fp.Pivot[2]), V = new Vector3[vc], N = new Vector3[vc], C = new Color32[vc], T = fp.Indices };
+                var p = new Part { Name = fp.Name, Parent = (AnimParent)fp.Parent, Kind = (AnimKind)fp.Kind, Param = fp.Param, Phase = fp.Phase, Pivot = new Vector3(fp.Pivot[0], fp.Pivot[1], fp.Pivot[2]), V = new Vector3[vc], N = new Vector3[vc], C = new Color32[vc], T = fp.Indices };
                 for (int i = 0; i < vc; i++)
                 {
                     p.V[i] = new Vector3(fp.Positions[i * 3], fp.Positions[i * 3 + 1], fp.Positions[i * 3 + 2]);

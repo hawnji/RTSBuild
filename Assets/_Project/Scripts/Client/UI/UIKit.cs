@@ -220,7 +220,7 @@ namespace RTS.Client
                 g.AddComponent<MeshFilter>().sharedMesh = m;
                 var mr = g.AddComponent<MeshRenderer>(); mr.sharedMaterial = Materials.LitNoFogShared;
             }
-            Add(mp.Body, Vector3.zero); Add(mp.Turret, mp.TurretPos); Add(mp.Rotor, mp.RotorPos); Add(mp.Extra, mp.ExtraPos);
+            foreach (var piece in mp.RestPieces()) Add(piece.Key, piece.Value);
             root.transform.position = new Vector3(-1000, -1000, -1000);
             root.transform.rotation = Quaternion.Euler(0, ud != null ? 200f : 180f, 0);
             float h = mp.Height * 0.5f;

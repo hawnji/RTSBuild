@@ -24,6 +24,11 @@ namespace RTS.Client
         public float LastHp;
         public float Dying;          // > 0 while playing the death sink
         public float Bank;
+        public Transform[] AnimT;    // one per ModelParts.Anim entry
+        public float Dist;           // ground distance travelled (wheels, treads)
+        public float Walk;           // walk cycle phase in radians
+        public float Stride;         // 0..1 blend between standing and walking
+        public Vector3 LastPos;
         public int ColorKey;
         public string DefId;
         public int Owner;
@@ -103,11 +108,25 @@ namespace RTS.Client
             if (parts.Turret != null) v.Turret = Part(v.Go.transform, "Turret", parts.Turret, parts.TurretPos, rs);
             if (parts.Rotor != null) v.Rotor = Part(v.Go.transform, "Rotor", parts.Rotor, parts.RotorPos, rs);
             if (parts.Extra != null) v.Extra = Part(v.Go.transform, "Extra", parts.Extra, parts.ExtraPos, rs);
+            if (parts.Anim.Count > 0)
+            {
+                v.AnimT = new Transform[parts.Anim.Count];
+                for (int i = 0; i < parts.Anim.Count; i++)
+                {
+                    var a = parts.Anim[i];
+                    var parent = a.Parent == AnimParent.Turret && v.Turret != null ? v.Turret
+                        : a.Parent == AnimParent.Rotor && v.Rotor != null ? v.Rotor
+                        : a.Parent == AnimParent.Extra && v.Extra != null ? v.Extra : v.Body;
+                    var lp = OnBody(v, a.Parent) ? parts.ParentPos(a.Parent) + a.LocalPos : a.LocalPos;
+                    v.AnimT[i] = Part(parent, a.Kind.ToString(), a.Mesh, lp, rs);
+                }
+            }
             v.Renderers = rs.ToArray();
             v.Visible = true;
             float yaw = 90f - e.Facing * Mathf.Rad2Deg;
             v.SmoothYaw = yaw; v.SmoothTurretYaw = 90f - e.TurretFacing * Mathf.Rad2Deg;
             v.SmoothPos = Target(e, 1f);
+            v.LastPos = v.SmoothPos;
             v.Go.transform.position = v.SmoothPos;
             v.SetTint(Color.white);
             return v;
@@ -248,6 +267,8 @@ namespace RTS.Client
                         v.Extra.localPosition = v.Parts.ExtraPos + Vector3.up * frac * 1.1f;
                     }
                 }
+                if (v.AnimT != null)
+                    Animate(v, 0f, b2.Operational && b2.BuildUp >= 1f && (b2.Powered || b2.Def.Power >= 0), time, dt);
                 return;
             }
 
@@ -304,7 +325,78 @@ namespace RTS.Client
             }
             if (v.Extra != null && u.Def.Category == UnitCategory.Naval)
                 v.Extra.localRotation = Quaternion.Euler(0, 180f + Mathf.DeltaAngle(v.SmoothYaw, v.SmoothTurretYaw) * 0.5f, 0);
+            if (v.AnimT != null)
+            {
+                // Signed ground speed along the unit's facing, measured from the drawn position.
+                var delta = v.SmoothPos - v.LastPos; delta.y = 0;
+                float along = dt > 0 && delta.sqrMagnitude < 4f ? Vector3.Dot(delta, rot * Vector3.forward) : 0f;
+                v.LastPos = v.SmoothPos;
+                v.Dist += along;
+                float spd = dt > 0 ? along / dt : 0f;
+                Animate(v, spd, !(u.IsAir && u.AState == AirState.Docked), time, dt);
+            }
         }
+
+        /// <summary>Drives imported models' animated pieces. speed is ground speed in cells per second.</summary>
+        static void Animate(EntityView v, float speed, bool active, float time, float dt)
+        {
+            var anim = v.Parts.Anim;
+            bool walking = Mathf.Abs(speed) > 0.08f;
+            v.Stride = Mathf.MoveTowards(v.Stride, walking ? 1f : 0f, dt * 5f);
+            // About one full step cycle per 0.55 cells for infantry.
+            v.Walk += Mathf.Abs(speed) * dt * (Mathf.PI * 2f / 0.55f);
+            float swing = Mathf.Sin(v.Walk) * v.Stride;
+            float breathe = Mathf.Sin(time * 1.7f + v.Id) * (1f - v.Stride);
+            for (int i = 0; i < anim.Count; i++)
+            {
+                var a = anim[i]; var t = v.AnimT[i];
+                if (t == null) continue;
+                float ph = a.Phase * Mathf.PI * 2f;
+                switch (a.Kind)
+                {
+                    case AnimKind.Wheel:
+                        t.localRotation = Quaternion.Euler(v.Dist / Mathf.Max(0.01f, a.Param) * Mathf.Rad2Deg, 0, 0); break;
+                    case AnimKind.LegL: t.localRotation = Quaternion.Euler(swing * a.Param, 0, 0); break;
+                    case AnimKind.LegR: t.localRotation = Quaternion.Euler(-swing * a.Param, 0, 0); break;
+                    case AnimKind.ArmL: t.localRotation = Quaternion.Euler(-swing * a.Param + breathe * 2f, 0, 0); break;
+                    case AnimKind.ArmR: t.localRotation = Quaternion.Euler(swing * a.Param + breathe * 2f, 0, 0); break;
+                    case AnimKind.Aim:
+                        t.localRotation = Quaternion.Euler(-v.Recoil * a.Param + Mathf.Sin(v.Walk * 2f) * 2.5f * v.Stride + breathe * 1.2f, Mathf.Sin(v.Walk) * 3f * v.Stride, 0);
+                        break;
+                    case AnimKind.Recoil:
+                        t.localPosition = RestPos(v, a) + Vector3.back * v.Recoil * a.Param; break;
+                    case AnimKind.Spin:
+                        if (active) t.localRotation = Quaternion.Euler(0, a.Param * dt, 0) * t.localRotation; break;
+                    case AnimKind.SpinX:
+                        if (active) t.localRotation = Quaternion.Euler(a.Param * dt, 0, 0) * t.localRotation; break;
+                    case AnimKind.Blink:
+                        {
+                            bool on = active && Mathf.Repeat(time * a.Param + a.Phase, 1f) < 0.5f;
+                            if (t.gameObject.activeSelf != on) t.gameObject.SetActive(on);
+                            break;
+                        }
+                    case AnimKind.Rock:
+                        if (active) t.localRotation = Quaternion.Euler(Mathf.Sin(time * 2f + ph) * a.Param, 0, 0); break;
+                    case AnimKind.Wave:
+                        t.localRotation = Quaternion.Euler(0, Mathf.Sin(time * 5f + ph + v.Id) * a.Param + Mathf.Sin(time * 8.3f + ph) * a.Param * 0.4f, 0); break;
+                    case AnimKind.TreadBottom:
+                        t.localPosition = RestPos(v, a) + Vector3.back * Mathf.Repeat(v.Dist, a.Param); break;
+                    case AnimKind.TreadTop:
+                        t.localPosition = RestPos(v, a) + Vector3.forward * Mathf.Repeat(v.Dist, a.Param); break;
+                    case AnimKind.Bob:
+                        {
+                            float amp = active ? 1f : 0f;
+                            t.localPosition = RestPos(v, a) + Vector3.up * (Mathf.Sin(time * 3f + ph) * 0.5f + 0.5f) * a.Param * amp;
+                            break;
+                        }
+                }
+            }
+        }
+
+        static Vector3 RestPos(EntityView v, AnimPart a) => OnBody(v, a.Parent) ? v.Parts.ParentPos(a.Parent) + a.LocalPos : a.LocalPos;
+
+        static bool OnBody(EntityView v, AnimParent p) => p == AnimParent.Body
+            || (p == AnimParent.Turret && v.Turret == null) || (p == AnimParent.Rotor && v.Rotor == null) || (p == AnimParent.Extra && v.Extra == null);
 
         public void Clear()
         {

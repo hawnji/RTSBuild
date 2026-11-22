@@ -18,6 +18,11 @@ from mathutils import Matrix, Vector
 
 TEAM_MARKER = (1.0, 0.0, 1.0)
 
+# Animation kinds (must match RTS.Client.AnimKind) and parents (RTS.Client.AnimParent).
+WHEEL, LEG_L, LEG_R, ARM_L, ARM_R, AIM, RECOIL, SPIN, SPIN_X, BLINK, ROCK, WAVE, TREAD_BOTTOM, TREAD_TOP, BOB = range(1, 16)
+PARENTS = {"Body": 0, "Turret": 1, "Rotor": 2, "Extra": 3}
+CORE = ("Body", "Turret", "Rotor", "Extra")
+
 # --------------------------------------------------------------------------------------------- scene helpers
 
 def reset_scene():
@@ -287,6 +292,16 @@ class ModelInfo:
         self.extra_spins = False
         self.infantry = False
         self.footprint = (0, 0)   # buildings: cells
+        self.anim = {}            # part name -> (parent, kind, param, phase)
+        self._n = 0
+
+    def animate(self, kind, param, pivot, parent="Body", phase=0.0, name=None):
+        """Registers an animated part and returns its name; pass it as part= to the primitives that make it."""
+        self._n += 1
+        name = name or f"a{self._n}"
+        self.anim[name] = (parent, kind, float(param), float(phase))
+        self.pivots[name] = tuple(pivot)
+        return name
 
 
 def _to_unity(v):
@@ -358,30 +373,36 @@ def _weld(p):
 
 
 def write_rtsm(path, info, parts):
-    """Binary layout (little endian):
-       'RTSM' u8 version=1
+    """Binary layout (little endian), version 2:
+       'RTSM' u8 version
        f32 height, f32 muzzleForward, f32 muzzleHeight
-       u8 flags (1 rotorVertical, 2 extraSpins, 4 infantry)
-       u8 footprintW, u8 footprintH
+       u8 flags (1 rotorVertical, 2 extraSpins, 4 infantry), u8 footprintW, u8 footprintH
        u8 partCount, then per part:
-         u8 nameLen, name (ascii), f32x3 pivot (Unity space), i32 vertexCount,
-         vertexCount x (f32x3 pos, f32x3 normal, u8x4 colour sRGB, alpha 255 unless emissive), i32 indexCount, indexCount x u16/i32
-         (i32 indices when vertexCount > 65535, otherwise u16)
+         u8 nameLen, name (ascii), u8 parent, u8 animKind, f32 param, f32 phase,
+         f32x3 pivot (Unity model space), i32 vertexCount,
+         vertexCount x (f32x3 pos relative to pivot, f32x3 normal, u8x4 colour sRGB; alpha < 255 = glow),
+         i32 indexCount, indices (u16, or i32 when vertexCount > 65535)
     """
     flags = (1 if info.rotor_vertical else 0) | (2 if info.extra_spins else 0) | (4 if info.infantry else 0)
+    order = [k for k in CORE if k in parts] + sorted(k for k in parts if k not in CORE)
+    if len(order) > 255:
+        raise ValueError("too many parts")
     with open(path, "wb") as f:
         f.write(b"RTSM")
-        f.write(struct.pack("<B", 1))
+        f.write(struct.pack("<B", 2))
         f.write(struct.pack("<fff", info.height, info.muzzle_forward, info.muzzle_height))
         f.write(struct.pack("<BBB", flags, info.footprint[0], info.footprint[1]))
-        order = [k for k in ("Body", "Turret", "Rotor", "Extra") if k in parts]
         f.write(struct.pack("<B", len(order)))
         total = 0
         for name in order:
             p = parts[name]
+            parent, kind, param, phase = info.anim.get(name, ("Body", 0, 0.0, 0.0))
+            if name not in CORE and kind == 0:
+                raise ValueError(f"part {name} has no animation")
             nb = name.encode("ascii")
             f.write(struct.pack("<B", len(nb)))
             f.write(nb)
+            f.write(struct.pack("<BBff", PARENTS[parent], kind, param, phase))
             f.write(struct.pack("<fff", *_to_unity(info.pivots.get(name, (0, 0, 0)))))
             f.write(struct.pack("<i", len(p["v"])))
             for i in range(len(p["v"])):
@@ -448,3 +469,39 @@ def render_preview(path, team_rgb=(0.80, 0.15, 0.12), size=512, frame=None, samp
     for o in list(scn.objects):
         if str(o.get("part", "")) == "__preview":
             bpy.data.objects.remove(o, do_unlink=True)
+
+
+def pose(info, amount=1.0):
+    """Moves animated parts to a sample pose (for previews only): legs mid-stride, arms swung, guns recoiled,
+    wheels and spinners turned. Approximates the in-game motion so pivots can be checked by eye."""
+    import math as _m
+    from mathutils import Matrix as _M
+    bpy.context.view_layer.update()   # matrix_world is stale until the scene is evaluated
+    for ob in bpy.context.scene.objects:
+        name = ob.get("part", "Body")
+        if name not in info.anim:
+            continue
+        parent, kind, param, phase = info.anim[name]
+        p = Vector(info.pivots[name])
+        if kind in (LEG_L, LEG_R, ARM_L, ARM_R):
+            sign = 1 if kind in (LEG_L, ARM_R) else -1
+            R = _M.Rotation(_m.radians(param * sign * amount), 4, "X")
+        elif kind == AIM:
+            R = _M.Rotation(_m.radians(param * amount), 4, "X")
+        elif kind in (WHEEL, SPIN_X):
+            R = _M.Rotation(_m.radians(40 * amount), 4, "X")
+        elif kind == SPIN:
+            R = _M.Rotation(_m.radians(40 * amount), 4, "Z")
+        elif kind == WAVE:
+            R = _M.Rotation(_m.radians(param * amount), 4, "Z")
+        elif kind == ROCK:
+            R = _M.Rotation(_m.radians(param * amount), 4, "X")
+        elif kind == RECOIL:
+            ob.matrix_world = _M.Translation((0, -param * amount, 0)) @ ob.matrix_world
+            continue
+        elif kind == BOB:
+            ob.matrix_world = _M.Translation((0, 0, param * amount)) @ ob.matrix_world
+            continue
+        else:
+            continue
+        ob.matrix_world = _M.Translation(p) @ R @ _M.Translation(-p) @ ob.matrix_world

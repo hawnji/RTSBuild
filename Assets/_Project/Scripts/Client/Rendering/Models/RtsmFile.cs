@@ -6,7 +6,7 @@ using System.Text;
 namespace RTS.Client
 {
     /// <summary>
-    /// Reader for the RTSM model format written by Tools/BlenderModels/kit.py (write_rtsm). It has no Unity
+    /// Reader for the RTSM model format (versions 1 and 2) written by Tools/BlenderModels/kit.py (write_rtsm). It has no Unity
     /// dependency so the format can be checked outside the editor. Positions are already in Unity space.
     /// </summary>
     public sealed class RtsmFile
@@ -14,6 +14,9 @@ namespace RTS.Client
         public sealed class Part
         {
             public string Name;
+            public byte Parent;         // 0 Body, 1 Turret, 2 Rotor, 3 Extra (version 2)
+            public byte Kind;           // AnimKind, 0 for the four main parts (version 2)
+            public float Param, Phase;  // animation settings (version 2)
             public float[] Pivot = new float[3];
             public float[] Positions;   // xyz per vertex
             public float[] Normals;     // xyz per vertex
@@ -34,7 +37,7 @@ namespace RTS.Client
                 if (data.Length < 20 || br.ReadByte() != 'R' || br.ReadByte() != 'T' || br.ReadByte() != 'S' || br.ReadByte() != 'M')
                     throw new InvalidDataException("not an RTSM file");
                 int ver = br.ReadByte();
-                if (ver != 1) throw new InvalidDataException("unsupported version " + ver);
+                if (ver != 1 && ver != 2) throw new InvalidDataException("unsupported version " + ver);
                 var f = new RtsmFile { Height = br.ReadSingle(), MuzzleForward = br.ReadSingle(), MuzzleHeight = br.ReadSingle() };
                 int flags = br.ReadByte();
                 f.RotorVertical = (flags & 1) != 0; f.ExtraSpins = (flags & 2) != 0; f.Infantry = (flags & 4) != 0;
@@ -44,6 +47,11 @@ namespace RTS.Client
                 {
                     var p = new Part();
                     p.Name = Encoding.ASCII.GetString(br.ReadBytes(br.ReadByte()));
+                    if (ver >= 2)
+                    {
+                        p.Parent = br.ReadByte(); p.Kind = br.ReadByte(); p.Param = br.ReadSingle(); p.Phase = br.ReadSingle();
+                        if (p.Parent > 3) throw new InvalidDataException("bad parent " + p.Parent);
+                    }
                     for (int k = 0; k < 3; k++) p.Pivot[k] = br.ReadSingle();
                     int vc = br.ReadInt32();
                     if (vc <= 0 || vc > 4_000_000) throw new InvalidDataException("bad vertex count " + vc);

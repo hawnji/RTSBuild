@@ -17,6 +17,53 @@ namespace RTS.Client
         public float MuzzleHeight = 0.3f;
         public float Height = 0.5f;           // overall height (health bar placement)
         public bool Infantry;
+        /// <summary>Extra animated pieces (imported models only). Empty for procedural models.</summary>
+        public readonly List<AnimPart> Anim = new List<AnimPart>();
+
+        /// <summary>Every mesh with its rest position in model space (icons, placement ghosts).</summary>
+        public IEnumerable<KeyValuePair<Mesh, Vector3>> RestPieces()
+        {
+            if (Body != null) yield return new KeyValuePair<Mesh, Vector3>(Body, Vector3.zero);
+            if (Turret != null) yield return new KeyValuePair<Mesh, Vector3>(Turret, TurretPos);
+            if (Rotor != null) yield return new KeyValuePair<Mesh, Vector3>(Rotor, RotorPos);
+            if (Extra != null) yield return new KeyValuePair<Mesh, Vector3>(Extra, ExtraPos);
+            foreach (var a in Anim) yield return new KeyValuePair<Mesh, Vector3>(a.Mesh, ParentPos(a.Parent) + a.LocalPos);
+        }
+
+        public Vector3 ParentPos(AnimParent p) => p == AnimParent.Turret ? TurretPos : p == AnimParent.Rotor ? RotorPos : p == AnimParent.Extra ? ExtraPos : Vector3.zero;
+    }
+
+    public enum AnimParent : byte { Body = 0, Turret = 1, Rotor = 2, Extra = 3 }
+
+    /// <summary>How an animated piece moves. Param meaning is listed per kind.</summary>
+    public enum AnimKind : byte
+    {
+        None = 0,
+        Wheel = 1,      // rolls around local X with ground speed; Param = wheel radius
+        LegL = 2,       // walk cycle swing around X at the hip; Param = amplitude in degrees
+        LegR = 3,
+        ArmL = 4,       // opposite swing to the leg on the same side; Param = amplitude
+        ArmR = 5,
+        Aim = 6,        // weapon and arms: kicks up when firing, sways when walking; Param = kick in degrees
+        Recoil = 7,     // slides back along -Z when firing; Param = distance
+        Spin = 8,       // turns around Y while active; Param = degrees per second
+        SpinX = 9,      // turns around X while active; Param = degrees per second
+        Blink = 10,     // shows and hides; Param = flashes per second
+        Rock = 11,      // rocks around X while active (pump jacks, cranes); Param = amplitude in degrees
+        Wave = 12,      // flutters around Y (flags); Param = amplitude in degrees
+        TreadBottom = 13, // track links slide back as the vehicle moves; Param = link spacing
+        TreadTop = 14,  // upper track run slides forward; Param = link spacing
+        Bob = 15,       // moves up and down while active (pistons, idle breathing); Param = distance
+    }
+
+    public class AnimPart
+    {
+        public Mesh Mesh;
+        public AnimParent Parent;
+        public Vector3 LocalPos;      // rest position relative to the parent part's pivot
+        public AnimKind Kind;
+        public float Param;
+        public float Phase;           // 0..1, offsets cycles so parts do not move in lockstep
     }
 
     /// <summary>
