@@ -52,7 +52,7 @@ namespace RTS.Sim
         // ------------------------------------------------------------------ Availability
         public bool CanBuildUnit(Player p, UnitDef u)
         {
-            if (u == null || u.Faction != p.Faction) return false;
+            if (u == null || u.Faction != p.Faction || u.Tier > p.MaxTechTier) return false;
             if (!HasPrereqs(p.Id, u.Prerequisites)) return false;
             if (!HasTechs(p, u.RequiredTech)) return false;
             return true;
@@ -60,7 +60,7 @@ namespace RTS.Sim
 
         public bool CanBuildStructure(Player p, BuildingDef b)
         {
-            if (b == null || b.Faction != p.Faction || !b.Buildable) return false;
+            if (b == null || b.Faction != p.Faction || !b.Buildable || b.Tier > p.MaxTechTier) return false;
             if (!_w.Settings.Superweapons && (b.Role == BuildingRole.Superweapon || b.Role == BuildingRole.SpecialPower)) return false;
             if (!_w.HasRole(p.Id, BuildingRole.ConstructionYard, true)) return false;
             if (!HasPrereqs(p.Id, b.Prerequisites)) return false;
@@ -81,7 +81,7 @@ namespace RTS.Sim
 
         public bool CanResearch(Player p, TechDef t)
         {
-            if (t == null || t.Faction != p.Faction || p.HasTech(t.Id)) return false;
+            if (t == null || t.Faction != p.Faction || p.HasTech(t.Id) || t.Tier > p.MaxTechTier) return false;
             foreach (var it in p.Queues[(int)ProductionQueueType.Research]) if (it.DefId == t.Id) return false;
             if (!HasPrereqs(p.Id, t.Prerequisites)) return false;
             if (!HasTechs(p, t.RequiredTech)) return false;
