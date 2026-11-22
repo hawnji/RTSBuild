@@ -26,7 +26,7 @@ namespace RTS.Client
         }
 
         public float Height, MuzzleForward, MuzzleHeight;
-        public bool RotorVertical, ExtraSpins, Infantry;
+        public bool RotorVertical, ExtraSpins, Infantry, Floating;
         public int FootW, FootH;
         public readonly List<Part> Parts = new List<Part>();
 
@@ -40,7 +40,7 @@ namespace RTS.Client
                 if (ver != 1 && ver != 2) throw new InvalidDataException("unsupported version " + ver);
                 var f = new RtsmFile { Height = br.ReadSingle(), MuzzleForward = br.ReadSingle(), MuzzleHeight = br.ReadSingle() };
                 int flags = br.ReadByte();
-                f.RotorVertical = (flags & 1) != 0; f.ExtraSpins = (flags & 2) != 0; f.Infantry = (flags & 4) != 0;
+                f.RotorVertical = (flags & 1) != 0; f.ExtraSpins = (flags & 2) != 0; f.Infantry = (flags & 4) != 0; f.Floating = (flags & 8) != 0;
                 f.FootW = br.ReadByte(); f.FootH = br.ReadByte();
                 int parts = br.ReadByte();
                 for (int pi = 0; pi < parts; pi++)

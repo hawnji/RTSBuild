@@ -291,6 +291,7 @@ class ModelInfo:
         self.rotor_vertical = True
         self.extra_spins = False
         self.infantry = False
+        self.floating = False     # aircraft and ships: parts may sit below Z = 0
         self.footprint = (0, 0)   # buildings: cells
         self.anim = {}            # part name -> (parent, kind, param, phase)
         self._n = 0
@@ -376,14 +377,14 @@ def write_rtsm(path, info, parts):
     """Binary layout (little endian), version 2:
        'RTSM' u8 version
        f32 height, f32 muzzleForward, f32 muzzleHeight
-       u8 flags (1 rotorVertical, 2 extraSpins, 4 infantry), u8 footprintW, u8 footprintH
+       u8 flags (1 rotorVertical, 2 extraSpins, 4 infantry, 8 floating), u8 footprintW, u8 footprintH
        u8 partCount, then per part:
          u8 nameLen, name (ascii), u8 parent, u8 animKind, f32 param, f32 phase,
          f32x3 pivot (Unity model space), i32 vertexCount,
          vertexCount x (f32x3 pos relative to pivot, f32x3 normal, u8x4 colour sRGB; alpha < 255 = glow),
          i32 indexCount, indices (u16, or i32 when vertexCount > 65535)
     """
-    flags = (1 if info.rotor_vertical else 0) | (2 if info.extra_spins else 0) | (4 if info.infantry else 0)
+    flags = (1 if info.rotor_vertical else 0) | (2 if info.extra_spins else 0) | (4 if info.infantry else 0) | (8 if info.floating else 0)
     order = [k for k in CORE if k in parts] + sorted(k for k in parts if k not in CORE)
     if len(order) > 255:
         raise ValueError("too many parts")
@@ -435,7 +436,7 @@ def render_preview(path, team_rgb=(0.80, 0.15, 0.12), size=512, frame=None, samp
     centre = (lo + hi) / 2
     radius = max((hi - lo).length / 2, 0.2)
     # ground
-    bpy.ops.mesh.primitive_plane_add(size=radius * 12, location=(centre.x, centre.y, -0.001))
+    bpy.ops.mesh.primitive_plane_add(size=radius * 12, location=(centre.x, centre.y, min(lo.z, 0.0) - 0.002))
     g = bpy.context.active_object
     g["part"] = "__preview"
     gm = bpy.data.materials.new("__ground"); gm.use_nodes = True

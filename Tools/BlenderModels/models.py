@@ -503,3 +503,4 @@ def barracks(P, info):
 
 
 import vehicles  # noqa: E402,F401  (registers vehicle models)
+import air_naval  # noqa: E402,F401

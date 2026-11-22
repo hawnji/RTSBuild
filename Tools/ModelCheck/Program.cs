@@ -32,8 +32,8 @@ foreach (var path in Directory.GetFiles(dir, "*.bytes").OrderBy(p => p))
         }
         if (f.Parts[0].Name != "Body") issues.Add("first part is not Body");
         if (!team) issues.Add("no team-colour vertices");
-        if (minY < -0.05f) issues.Add($"geometry below ground ({minY:0.00})");
-        float limit = f.FootW > 0 ? MathF.Max(f.FootW, f.FootH) * 0.5f + 0.05f : 1.6f;
+        if (minY < -0.05f && !f.Floating) issues.Add($"geometry below ground ({minY:0.00})");
+        float limit = f.FootW > 0 ? MathF.Max(f.FootW, f.FootH) * 0.5f + 0.05f : f.Floating ? 1.45f : 1.25f;
         if (maxXZ > limit) issues.Add($"wider than expected ({maxXZ:0.00} > {limit:0.00})");
         if (tris > 40000) issues.Add($"too many triangles ({tris})");
         string parts = string.Join(" ", f.Parts.Select(p => $"{p.Name}:{p.Indices.Length / 3}"));
