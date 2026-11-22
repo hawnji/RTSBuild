@@ -31,12 +31,18 @@ namespace RTS.EditorTools
 
         static ProjectSetup()
         {
-            EditorApplication.delayCall += () =>
-            {
-                if (SessionState.GetBool(SessionKey, false)) return;
-                SessionState.SetBool(SessionKey, true);
-                try { RunAll(false); } catch (Exception ex) { Debug.LogWarning("[RTS] Automatic project setup failed: " + ex.Message + "\nUse RTS > Setup > Run Full Project Setup."); }
-            };
+            // Run once the editor has finished importing and compiling (delayCall can fire while an import is still running).
+            EditorApplication.update += RunWhenIdle;
+        }
+
+        static void RunWhenIdle()
+        {
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            EditorApplication.update -= RunWhenIdle;
+            if (SessionState.GetBool(SessionKey, false)) return;
+            SessionState.SetBool(SessionKey, true);
+            Debug.Log("[RTS] Running automatic project setup (Boot scene, player settings, URP)...");
+            try { RunAll(false); } catch (Exception ex) { Debug.LogWarning("[RTS] Automatic project setup failed: " + ex.Message + "\nUse RTS > Setup > Run Full Project Setup."); }
         }
 
         [MenuItem("RTS/Setup/Run Full Project Setup", priority = 0)]
@@ -57,7 +63,14 @@ namespace RTS.EditorTools
             if (!File.Exists(BootScene))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(BootScene));
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+                // Unity refuses to add a scene next to an unsaved "Untitled" scene, so replace the open scene instead
+                // (offering to save any changes first) and leave the new Boot scene open.
+                if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                {
+                    Debug.LogWarning("[RTS] Boot scene not created: save or discard the open scene, then run RTS > Setup again.");
+                    return;
+                }
+                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 var cam = new GameObject("Main Camera") { tag = "MainCamera" };
                 var c = cam.AddComponent<Camera>();
                 c.clearFlags = CameraClearFlags.SolidColor; c.backgroundColor = new Color(0.04f, 0.04f, 0.05f);
@@ -66,7 +79,6 @@ namespace RTS.EditorTools
                 var note = new GameObject("README - GameRoot spawns automatically at runtime");
                 SceneManager.MoveGameObjectToScene(note, scene);
                 EditorSceneManager.SaveScene(scene, BootScene);
-                EditorSceneManager.CloseScene(scene, true);
                 AssetDatabase.Refresh();
                 Debug.Log("[RTS] Created " + BootScene);
             }
@@ -97,12 +109,8 @@ namespace RTS.EditorTools
         // ------------------------------------------------------------------ URP
         static Type UrpType(string name)
         {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var t = asm.GetType("UnityEngine.Rendering.Universal." + name, false);
-                if (t != null) return t;
-            }
-            return null;
+            // URP runtime types live in this assembly; resolving by assembly-qualified name avoids scanning the AppDomain.
+            return Type.GetType("UnityEngine.Rendering.Universal." + name + ", Unity.RenderPipelines.Universal.Runtime", false);
         }
 
         [MenuItem("RTS/Setup/Install Universal Render Pipeline")]

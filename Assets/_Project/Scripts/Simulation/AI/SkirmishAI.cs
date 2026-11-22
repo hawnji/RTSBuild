@@ -23,6 +23,8 @@ namespace RTS.Sim
         float _nextThink, _nextMilitary, _nextIntel, _nextScout, _nextAttack, _nextHarass, _nextPowers;
         Vec2 _baseCenter;
         bool _hasBase;
+        /// <summary>True while the AI still owns at least one non-wall structure.</summary>
+        public bool HasBase => _hasBase;
         Vec2 _rally;
         int _attackWaves;
         Vec2 _attackTarget;
