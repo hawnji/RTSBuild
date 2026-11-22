@@ -63,7 +63,14 @@ namespace RTS.EditorTools
             if (!File.Exists(BootScene))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(BootScene));
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+                // Unity refuses to add a scene next to an unsaved "Untitled" scene, so replace the open scene instead
+                // (offering to save any changes first) and leave the new Boot scene open.
+                if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                {
+                    Debug.LogWarning("[RTS] Boot scene not created: save or discard the open scene, then run RTS > Setup again.");
+                    return;
+                }
+                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 var cam = new GameObject("Main Camera") { tag = "MainCamera" };
                 var c = cam.AddComponent<Camera>();
                 c.clearFlags = CameraClearFlags.SolidColor; c.backgroundColor = new Color(0.04f, 0.04f, 0.05f);
@@ -72,7 +79,6 @@ namespace RTS.EditorTools
                 var note = new GameObject("README - GameRoot spawns automatically at runtime");
                 SceneManager.MoveGameObjectToScene(note, scene);
                 EditorSceneManager.SaveScene(scene, BootScene);
-                EditorSceneManager.CloseScene(scene, true);
                 AssetDatabase.Refresh();
                 Debug.Log("[RTS] Created " + BootScene);
             }
