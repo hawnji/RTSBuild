@@ -350,6 +350,19 @@ namespace RTS.Sim
         {
             var def = Catalog.Building(defId);
             if (def == null) return null;
+            // Scripted positions can collide with preset base layouts: shift to the nearest free footprint.
+            if (!FootprintFree(def, x, y))
+            {
+                bool found = false;
+                for (int r = 1; r <= 8 && !found; r++)
+                    for (int dy = -r; dy <= r && !found; dy++)
+                        for (int dx = -r; dx <= r && !found; dx++)
+                        {
+                            if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != r) continue;
+                            if (FootprintFree(def, x + dx, y + dy)) { x += dx; y += dy; found = true; }
+                        }
+                if (!found) return null;
+            }
             // Clear blocking terrain for scripted placement.
             for (int dy = 0; dy < def.Height; dy++)
                 for (int dx = 0; dx < def.Width; dx++)
@@ -360,11 +373,21 @@ namespace RTS.Sim
                         W.Map.Set(x + dx, y + dy, MapGenerator.BaseTerrain(W.Map.Theme));
                     if (W.Map.InBounds(x + dx, y + dy)) W.Map.Ore[W.Map.Index(x + dx, y + dy)] = 0;
                 }
-            if (W.BuildingAtCell(x, y) != null) return null;
             var b = W.SpawnBuilding(defId, p.Id, new Int2(x, y), true);
             b.Tag = tag;
             if (p.IsHuman) p.Stats.BuildingsBuilt--;
             return b;
+        }
+
+        bool FootprintFree(BuildingDef def, int x, int y)
+        {
+            for (int dy = 0; dy < def.Height; dy++)
+                for (int dx = 0; dx < def.Width; dx++)
+                {
+                    if (!W.Map.InBounds(x + dx, y + dy) || x + dx <= 0 || y + dy <= 0 || x + dx >= W.Map.Width - 1 || y + dy >= W.Map.Height - 1) return false;
+                    if (W.BuildingAtCell(x + dx, y + dy) != null) return false;
+                }
+            return true;
         }
 
         /// <summary>Lays down a complete faction base around a center using a preset layout.</summary>

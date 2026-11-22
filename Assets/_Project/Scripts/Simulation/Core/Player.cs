@@ -66,6 +66,7 @@ namespace RTS.Sim
         public bool AIHarvests = true;
         public float AIAggression = 1f;
         public bool Revealed;               // full map visibility (spectator/cheat/script)
+        public int MaxTechTier = 99;        // campaign progression limits available tech
         public bool PlayerControlled => IsHuman;
 
         [NonSerialized] public TechModifiers Mods = new TechModifiers();

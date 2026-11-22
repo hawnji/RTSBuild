@@ -52,7 +52,7 @@ namespace RTS.Sim
         // ------------------------------------------------------------------ Availability
         public bool CanBuildUnit(Player p, UnitDef u)
         {
-            if (u == null || u.Faction != p.Faction) return false;
+            if (u == null || u.Faction != p.Faction || u.Tier > p.MaxTechTier) return false;
             if (!HasPrereqs(p.Id, u.Prerequisites)) return false;
             if (!HasTechs(p, u.RequiredTech)) return false;
             return true;
@@ -60,7 +60,7 @@ namespace RTS.Sim
 
         public bool CanBuildStructure(Player p, BuildingDef b)
         {
-            if (b == null || b.Faction != p.Faction || !b.Buildable) return false;
+            if (b == null || b.Faction != p.Faction || !b.Buildable || b.Tier > p.MaxTechTier) return false;
             if (!_w.Settings.Superweapons && (b.Role == BuildingRole.Superweapon || b.Role == BuildingRole.SpecialPower)) return false;
             if (!_w.HasRole(p.Id, BuildingRole.ConstructionYard, true)) return false;
             if (!HasPrereqs(p.Id, b.Prerequisites)) return false;
@@ -81,7 +81,7 @@ namespace RTS.Sim
 
         public bool CanResearch(Player p, TechDef t)
         {
-            if (t == null || t.Faction != p.Faction || p.HasTech(t.Id)) return false;
+            if (t == null || t.Faction != p.Faction || p.HasTech(t.Id) || t.Tier > p.MaxTechTier) return false;
             foreach (var it in p.Queues[(int)ProductionQueueType.Research]) if (it.DefId == t.Id) return false;
             if (!HasPrereqs(p.Id, t.Prerequisites)) return false;
             if (!HasTechs(p, t.RequiredTech)) return false;
@@ -423,9 +423,10 @@ namespace RTS.Sim
         }
 
         /// <summary>Finds a valid placement near a point (used by AI and by MCV auto-deploy).</summary>
-        public Int2? FindPlacement(int playerId, BuildingDef def, Vec2 near, int maxRadius, SimRandom rng, int spacing = 1)
+        public Int2? FindPlacement(int playerId, BuildingDef def, Vec2 near, int maxRadius, SimRandom rng, int spacing = 1, bool keepOpen = false)
         {
             var c = Int2.Floor(near);
+            int rejected = 0;
             for (int r = 0; r <= maxRadius; r++)
             {
                 var candidates = new List<Int2>();
@@ -438,9 +439,56 @@ namespace RTS.Sim
                         if (spacing > 0 && !def.OnWater && !HasClearance(o, def.Width, def.Height, spacing)) continue;
                         candidates.Add(o);
                     }
-                if (candidates.Count > 0) return candidates[rng.Range(0, candidates.Count)];
+                while (candidates.Count > 0)
+                {
+                    int k = rng.Range(0, candidates.Count);
+                    var o = candidates[k];
+                    if (!keepOpen || def.OnWater || rejected > 12 || KeepsBaseOpen(playerId, def, o)) return o;
+                    candidates.RemoveAt(k); rejected++;
+                }
             }
             return null;
+        }
+
+        /// <summary>
+        /// True if a structure at o would not cut the owner's base off from the rest of the map for ground vehicles
+        /// (for example by plugging the only ramp of a plateau).
+        /// </summary>
+        public bool KeepsBaseOpen(int playerId, BuildingDef def, Int2 o)
+        {
+            var p = _w.GetPlayer(playerId);
+            if (p == null) return true;
+            int team = _w.TeamOf(playerId);
+            var m = _w.Map;
+            var start = _w.Pathfinder.NearestPassable(p.StartCell, MoveClass.Vehicle, team, 10);
+            var goal = _w.Pathfinder.NearestPassable(new Int2(m.Width / 2, m.Height / 2), MoveClass.Vehicle, team, 20);
+            bool InFoot(int x, int y) => x >= o.X && y >= o.Y && x < o.X + def.Width && y < o.Y + def.Height;
+            bool Reach(bool withFootprint)
+            {
+                if (withFootprint && InFoot(start.X, start.Y)) return false;
+                var seen = new bool[m.Width * m.Height];
+                var q = new Queue<Int2>();
+                q.Enqueue(start); seen[m.Index(start.X, start.Y)] = true;
+                while (q.Count > 0)
+                {
+                    var cc = q.Dequeue();
+                    if (cc == goal) return true;
+                    for (int d = 0; d < 4; d++)
+                    {
+                        int nx = cc.X + (d == 0 ? 1 : d == 1 ? -1 : 0), ny = cc.Y + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                        if (!m.InBounds(nx, ny)) continue;
+                        int ni = m.Index(nx, ny);
+                        if (seen[ni]) continue;
+                        seen[ni] = true;
+                        if (withFootprint && InFoot(nx, ny)) continue;
+                        if (!_w.Passable(nx, ny, MoveClass.Vehicle, team)) continue;
+                        q.Enqueue(new Int2(nx, ny));
+                    }
+                }
+                return false;
+            }
+            if (!Reach(false)) return true;   // already cut off (or odd map): nothing to protect
+            return Reach(true);
         }
 
         /// <summary>Keeps a walkable ring around AI structures so bases do not wall themselves in.</summary>
