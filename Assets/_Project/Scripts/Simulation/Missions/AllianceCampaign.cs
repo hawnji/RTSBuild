@@ -236,7 +236,7 @@ namespace RTS.Sim
                     Id = "ca05", Faction = CA, Index = 5, Title = "Iron Convoy", Location = "Merrow Highway", Date = "11 April 1994", NoBase = true,
                     Map = map, StartingCredits = 0, EnemyFaction = ID, Music = "battle",
                     Briefing = "Merrow is cut off. Five supply trucks carrying aurite capacitors and medical supplies must reach the city along the highway.\n\n" +
-                               "Escort the convoy east. At least three trucks must reach Merrow. Expect ambushes at the river bridge and the ridge cuts. The trucks follow the highway and will stop when threatened; clear the road ahead of them.",
+                               "Escort the convoy east. At least three trucks must reach Merrow. Expect ambushes at the river bridge and the ridge cuts. The trucks follow the highway, only move while your forces are close by, and stop when enemies are near; clear the road ahead of them.",
                     VictoryText = "The convoy rolls into Merrow to cheering crowds. The city will hold.",
                     Tags = { "escort convoy" },
                     Players = m => { m.AddHuman(); m.AddAI("enemy", "Dominion Raiders", ID, 1, builds: false, attacks: false); },
@@ -261,14 +261,17 @@ namespace RTS.Sim
                         m.AddObjective("ambush", "Destroy the raider force at the ridge (northeast).", primary: false);
                         m.At(2, "intro", () => m.Say("Convoy Lead", "Convoy rolling. We're counting on you to keep the road clear."));
                         // Trucks advance waypoint by waypoint, pausing when enemies are near.
-                        m.Every(2, "drive", () => true, () =>
+                        m.Every(1, "drive", () => m.W.Time > 15, () =>
                         {
                             foreach (var ent in m.Tagged("convoy"))
                             {
                                 if (!(ent is Unit u) || u.Owner != m.Human.Id) continue;
                                 bool danger = false;
-                                foreach (var o in m.W.Units) if (!o.Dead && m.W.IsEnemy(u.Owner, o.Owner) && o.IsArmed && Vec2.Distance(o.Pos, u.Pos) < 8 && m.W.Combat.VisibleTo(o, m.Human.Team)) { danger = true; break; }
-                                if (danger) { if (u.Moving) m.W.Movement.Stop(u); continue; }
+                                foreach (var o in m.W.Units) if (!o.Dead && m.W.IsEnemy(u.Owner, o.Owner) && o.IsArmed && Vec2.Distance(o.Pos, u.Pos) < 11) { danger = true; break; }
+                                // Trucks only roll with an armed escort close by.
+                                bool escorted = false;
+                                foreach (var o in m.W.Units) if (!o.Dead && o.Owner == m.Human.Id && o.IsArmed && Vec2.Distance(o.Pos, u.Pos) < 9) { escorted = true; break; }
+                                if (danger || !escorted) { if (u.Moving) m.W.Movement.Stop(u); continue; }
                                 int next = 0;
                                 for (int i = 0; i < route.Length; i++) if (u.Pos.X < route[i].X - 1.5f) { next = i; break; } else next = route.Length - 1;
                                 if (!u.Moving) m.W.Movement.RequestMove(u, route[next] + new Vec2(0, (u.Id % 3) * 0.8f - 0.8f));
@@ -453,15 +456,23 @@ namespace RTS.Sim
                         m.AddObjective("base", "Destroy Barr's headquarters base.", primary: false);
                         m.At(2, "intro", () => { m.Say("Maj. Lind", "That's Barr's tank, marked on your display. Don't let him slip away."); m.CameraTo(88, 24, 2); m.Reveal(88, 24, 6, 15); });
                         m.At(6, "back", () => m.CameraTo(16, 14));
-                        m.At(150, "depart", () =>
+                        // The column moves in legs with refuelling halts, reaching the airfield after roughly ten minutes.
+                        var route = new[] { V(70, 40), V(56, 60), V(40, 80), V(14, 90) };
+                        var legTimes = new[] { 150f, 300f, 450f, 570f };
+                        for (int leg = 0; leg < route.Length; leg++)
                         {
-                            m.Say("Radio Intercept", "(Dominion) ...Headquarters column moving out. Airfield in twelve minutes...");
-                            var route = new[] { V(70, 40), V(56, 60), V(40, 80), V(14, 90) };
-                            foreach (var ent in m.Tagged("barr"))
-                                if (ent is Unit u) { m.W.Commands.Move(new[] { u.Id }, e.Id, route[0]); for (int i = 1; i < route.Length; i++) m.W.Commands.Move(new[] { u.Id }, e.Id, route[i], true); }
-                            foreach (var ent in m.Tagged("escort"))
-                                if (ent is Unit u) m.W.Commands.Follow(new[] { u.Id }, e.Id, m.Tagged("barr").Count > 0 ? m.Tagged("barr")[0].Id : u.Id);
-                        });
+                            int li = leg;
+                            m.At(legTimes[li], "leg" + li, () =>
+                            {
+                                if (li == 0) m.Say("Radio Intercept", "(Dominion) ...Headquarters column moving out. Wheels up at the airfield in ten minutes...");
+                                if (li == route.Length - 1) m.Say("Maj. Lind", "Barr's column is making its final run for the airfield!");
+                                foreach (var ent in m.Tagged("barr"))
+                                    if (ent is Unit u) m.W.Commands.Move(new[] { u.Id }, e.Id, route[li]);
+                                if (li == 0)
+                                    foreach (var ent in m.Tagged("escort"))
+                                        if (ent is Unit u) m.W.Commands.Follow(new[] { u.Id }, e.Id, m.Tagged("barr").Count > 0 ? m.Tagged("barr")[0].Id : u.Id);
+                            });
+                        }
                         m.When("dead", () => m.AllDead("barr"), () => { m.Complete("barr"); m.Complete("escape"); });
                         m.When("escaped", () => m.CountInZone("airfield", e, u => u.Tag == "barr") > 0, () => m.Fail("escape"));
                         m.When("base", () => m.CountBuildings(e) == 0, () => m.Complete("base"));

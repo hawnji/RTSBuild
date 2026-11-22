@@ -44,7 +44,7 @@ namespace RTS.Sim
                 case AIDifficulty.Easy:
                     return new AIProfile
                     {
-                        Difficulty = d, ThinkInterval = 2.5f, MilitaryInterval = 4f, IdleChance = 0.35f, MaxRefineries = 1, HarvestersPerRefinery = 1,
+                        Difficulty = d, ThinkInterval = 2.5f, MilitaryInterval = 4f, IdleChance = 0.35f, MaxRefineries = 1, HarvestersPerRefinery = 2,
                         Expands = false, MaxTier = 2, Researches = false, TargetDefenses = 1, FirstAttackTime = 720, AttackInterval = 300,
                         AttackMinValue = 3000, AttackValueGrowth = 300, ScoutInterval = 0, Flanks = false, Harasses = false, CounterWeight = 0f,
                         RetreatHp = 0, UsesAir = false, UsesNaval = false, UsesSuperweapons = false, RepairsStructures = false, FocusFire = false,

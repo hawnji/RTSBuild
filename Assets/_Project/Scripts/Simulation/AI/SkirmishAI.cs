@@ -50,6 +50,21 @@ namespace RTS.Sim
             _nextHarass = Profile.FirstAttackTime * 0.7f;
         }
 
+        /// <summary>One-line state summary for diagnostics (headless QA harness, debug overlay).</summary>
+        public string DebugSummary()
+        {
+            var counts = new Dictionary<Role, int>();
+            float rallyValue = 0;
+            foreach (var kv in _roles)
+            {
+                counts.TryGetValue(kv.Value, out int n); counts[kv.Value] = n + 1;
+                if (kv.Value == Role.Rally) { var u = _w.GetUnit(kv.Key); if (u != null) rallyValue += u.Def.Cost; }
+            }
+            float need = Profile.AttackMinValue + Profile.AttackValueGrowth * _attackWaves * Me.AIAggression;
+            return $"waves {_attackWaves} active {_attackActive} next {_nextAttack:F0}s target {_attackTarget.X:F0},{_attackTarget.Y:F0} rally {rallyValue:F0}/{need:F0} credits {Me.Credits:F0} ref {Count(BuildingRole.Refinery)} ore18 {OreNearBase(18)} ore26 {OreNearBase(26)} roles " +
+                   string.Join(" ", counts.Select(kv => kv.Key + ":" + kv.Value));
+        }
+
         public void Update()
         {
             var me = Me;
@@ -222,7 +237,11 @@ namespace RTS.Sim
             if (refineries == 0) return Def(BuildingRole.Refinery);
             if (Count(BuildingRole.Barracks) == 0 && CanBuild(Def(BuildingRole.Barracks))) return Def(BuildingRole.Barracks);
             if (Count(BuildingRole.Factory) == 0 && CanBuild(Def(BuildingRole.Factory))) return Def(BuildingRole.Factory);
-            if (refineries < 2 && refineries < Profile.MaxRefineries && CanBuild(Def(BuildingRole.Refinery)) && OreNearBase(18) > 4000) return Def(BuildingRole.Refinery);
+            // Economy before tech: a second refinery as soon as the basics stand.
+            if (refineries < 2 && refineries < Profile.MaxRefineries && CanBuild(Def(BuildingRole.Refinery)) && (OreNearBase(18) > 4000 || OreNearBase(26) > 6000)) return Def(BuildingRole.Refinery);
+            if (refineries < Profile.MaxRefineries && minutes > 4 && CanBuild(Def(BuildingRole.Refinery)) && OreNearBase(24) > 5000 && harvesters >= refineries * Profile.HarvestersPerRefinery) return Def(BuildingRole.Refinery);
+            // Do not sink money into tech while the harvester fleet is short.
+            if (harvesters < refineries * Profile.HarvestersPerRefinery && me.Credits < 1500) return null;
             if (Count(BuildingRole.Radar) == 0 && CanBuild(Def(BuildingRole.Radar))) return Def(BuildingRole.Radar);
             // Storage
             if (me.StorageCap > 0 && me.Credits > me.StorageCap * 0.85f && CanBuild(Def(BuildingRole.Silo))) return Def(BuildingRole.Silo);
@@ -387,8 +406,8 @@ namespace RTS.Sim
             var vq = me.Queues[(int)ProductionQueueType.Vehicles];
             var hvDef = Catalog.Unit(Catalog.Faction(F).HarvesterUnit);
             bool harvesterQueued = vq.Any(i => i.DefId == hvDef.Id);
-            if (refineries > 0 && harvesters < refineries * Profile.HarvestersPerRefinery && !harvesterQueued && me.AIHarvests)
-                _w.Commands.Enqueue(PlayerId, hvDef.Id);
+            bool needHarvester = refineries > 0 && harvesters < refineries * Profile.HarvestersPerRefinery && me.AIHarvests;
+            if (needHarvester && !harvesterQueued) _w.Commands.Enqueue(PlayerId, hvDef.Id);
             // Expansion MCV
             if (Profile.Expands && me.AIBuilds && _expansionMcvId == 0 && _w.Time > 600 && refineries >= 1 && OreNearBase(20) < 6000 && me.Credits > 4500
                 && Count(BuildingRole.ConstructionYard) < 3 && !vq.Any(i => Catalog.Unit(i.DefId)?.Has(UnitAbility.DeployToHQ) == true)
@@ -398,6 +417,9 @@ namespace RTS.Sim
                 if (_w.Production.CanBuildUnit(me, mcv)) _w.Commands.Enqueue(PlayerId, mcv.Id);
             }
             float reserve = Profile.CreditReserve;
+            // Save up for the missing harvester instead of spending everything on the army.
+            if (needHarvester && harvesters == 0) reserve += hvDef.Cost;
+            else if (needHarvester) reserve += hvDef.Cost * 0.4f;
             foreach (var qt in new[] { ProductionQueueType.Infantry, ProductionQueueType.Vehicles, ProductionQueueType.Aircraft, ProductionQueueType.Naval })
             {
                 var q = me.Queues[(int)qt];
@@ -564,6 +586,8 @@ namespace RTS.Sim
             {
                 if (_roles.ContainsKey(u.Id)) continue;
                 if (!u.IsArmed || u.Def.Has(UnitAbility.Harvester)) continue;
+                // Scripted mission units (tagged) stay where the mission placed them; the script commands them.
+                if (_w.Mission != null && u.Tag != null) continue;
                 Role r = Role.Rally;
                 if (u.IsAir) r = Role.Air;
                 else if (u.MoveClass == MoveClass.Naval) r = Role.Naval;
@@ -689,8 +713,13 @@ namespace RTS.Sim
                 if (!(board.AttackLaunchTime > _w.Time - 20 && board.TargetOwner >= 0 && Profile.Difficulty >= AIDifficulty.Normal)) return;
             }
             var rally = UnitsWithRole(Role.Rally).Where(u => !u.IsAir && u.MoveClass != MoveClass.Naval).ToList();
-            float value = rally.Sum(u => (float)u.Def.Cost);
-            float need = Profile.AttackMinValue + Profile.AttackValueGrowth * _attackWaves * Me.AIAggression;
+            // Defenders beyond the home guard join the strike.
+            var extraDefense = UnitsWithRole(Role.Defense).Where(u => !u.IsAir && u.MoveClass != MoveClass.Naval).Skip(3).ToList();
+            float value = rally.Sum(u => (float)u.Def.Cost) + extraDefense.Sum(u => (float)u.Def.Cost);
+            float need = Profile.AttackMinValue + Profile.AttackValueGrowth * Math.Min(_attackWaves, 6) * Me.AIAggression;
+            // An army that has waited long past its schedule attacks with what it has.
+            if (_w.Time > _nextAttack + Profile.AttackInterval * 0.5f) need *= 0.6f;
+            if (_w.Time > _nextAttack + Profile.AttackInterval * 1.5f) need *= 0.6f;
             if (value < need && !(board.AttackLaunchTime > _w.Time - 20 && value > need * 0.5f)) return;
             // Choose target (shared with team).
             int targetOwner = board.TargetOwner;
@@ -710,6 +739,7 @@ namespace RTS.Sim
             _attackStarted = _w.Time;
             _attackWaves++;
             _nextAttack = _w.Time + Profile.AttackInterval * _rng.Range(0.85f, 1.2f);
+            rally.AddRange(extraDefense);
             foreach (var u in rally) _roles[u.Id] = Role.Attack;
             if (Profile.Flanks && rally.Count >= 8)
             {
@@ -770,6 +800,9 @@ namespace RTS.Sim
 
         void Scout()
         {
+            // Scouts that finished their trip rejoin the army.
+            foreach (var sc in UnitsWithRole(Role.Scout))
+                if (sc.IsIdle) { _roles[sc.Id] = Role.Rally; _w.Commands.AttackMove(new[] { sc.Id }, PlayerId, _rally); }
             if (Profile.ScoutInterval <= 0 || _w.Time < _nextScout) return;
             _nextScout = _w.Time + Profile.ScoutInterval;
             // Prefer recon aircraft, else a fast ground unit.
@@ -855,7 +888,7 @@ namespace RTS.Sim
                 if (u == null) continue;
                 if (kv.Value == Role.Retreat)
                 {
-                    if (u.HpRatio > 0.9f || (u.IsIdle && depot == null && Vec2.Distance(u.Pos, _baseCenter) < 8))
+                    if (u.HpRatio > 0.9f || (u.IsIdle && Vec2.Distance(u.Pos, _baseCenter) < 12) || (u.IsIdle && depot == null))
                     {
                         _roles[u.Id] = Role.Rally;
                         _w.Commands.AttackMove(new[] { u.Id }, PlayerId, _rally);

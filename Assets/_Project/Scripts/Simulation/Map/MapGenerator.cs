@@ -93,7 +93,7 @@ namespace RTS.Sim
             foreach (var feat in spec.Features) ApplyFeature(m, feat, rng, ramps);
 
             // 3. Symmetry
-            if (spec.Symmetry == Symmetry.Rotational2) ApplyRotational(m, ramps);
+            if (spec.Symmetry == Symmetry.Rotational2) ApplyRotational(m, ramps, spec.Starts.Count == 0 || spec.Starts[0].Y * W + spec.Starts[0].X < W * H / 2);
             else if (spec.Symmetry == Symmetry.Mirror4) ApplyMirror4(m, ramps);
 
             // 4. Starting areas
@@ -322,11 +322,13 @@ namespace RTS.Sim
                 }
         }
 
-        static void ApplyRotational(MapData m, HashSet<int> ramps)
+        /// <summary>Copies the authored half (the one holding the first start) onto the other half, rotated 180°.</summary>
+        static void ApplyRotational(MapData m, HashSet<int> ramps, bool authoredLowHalf)
         {
             int n = m.Width * m.Height;
             var add = new List<int>();
-            for (int i = n / 2; i < n; i++)
+            int from = authoredLowHalf ? n / 2 : 0, to = authoredLowHalf ? n : n / 2;
+            for (int i = from; i < to; i++)
             {
                 int x = i % m.Width, y = i / m.Width;
                 int j = m.Index(m.Width - 1 - x, m.Height - 1 - y);
@@ -334,7 +336,7 @@ namespace RTS.Sim
                 if (ramps.Contains(j)) add.Add(i); else ramps.Remove(i);
             }
             foreach (var a in add) ramps.Add(a);
-            MirrorVents(m, (v) => new Int2(m.Width - 1 - v.X, m.Height - 1 - v.Y), (v) => v.Y * m.Width + v.X < n / 2);
+            MirrorVents(m, (v) => new Int2(m.Width - 1 - v.X, m.Height - 1 - v.Y), (v) => (v.Y * m.Width + v.X < n / 2) == authoredLowHalf);
         }
 
         static void ApplyMirror4(MapData m, HashSet<int> ramps)

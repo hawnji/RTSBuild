@@ -253,6 +253,7 @@ namespace RTS.Sim
                         m.BuildBase(e, 86, 86, BasePreset.Medium, "ebase");
                         m.BuildBase(e, 70, 70, BasePreset.Airbase, "air");
                         m.Build(e, "ca_hangar", 92, 72, "air_hangar");
+                        foreach (var p in new[] { V(64, 64), V(78, 62), V(66, 78), V(82, 80), V(58, 72) }) m.Build(e, "ca_aadefense", (int)p.X, (int)p.Y, "skyshield");
                         foreach (var p in new[] { V(70, 66), V(73, 66), V(92, 70) }) { var u = m.Spawn(e, "ca_hornet", p.X, p.Y); }
                     },
                     Script = m =>
@@ -261,7 +262,7 @@ namespace RTS.Sim
                         m.AddObjective("hangars", "Destroy all Alliance aircraft hangars.");
                         m.AddObjective("aa", "Destroy the Skyshield batteries.", primary: false);
                         m.When("hangars", () => m.W.CountRole(e.Id, BuildingRole.Hangar) == 0 && m.W.CountRole(e.Id, BuildingRole.AdvancedHangar) == 0 && m.W.Time > 5, () => m.Complete("hangars"));
-                        m.When("aa", () => !HasDef(m, e, "ca_aadefense") && m.W.Time > 5, () => m.Complete("aa"));
+                        m.When("aa", () => m.AllDead("skyshield") && m.W.Time > 5, () => m.Complete("aa"));
                         m.Every(150, "sorties", () => m.W.CountRole(e.Id, BuildingRole.Hangar) > 0, () => m.Attack(e, 80, 80, 20, 18, "sortie", Scale(m, "ca_hornet", "ca_hornet")));
                     }
                 });
@@ -322,7 +323,7 @@ namespace RTS.Sim
                                "The Alliance plans to move the prisoners by truck. If the transfer convoy reaches the southern road, they are lost to us.",
                     VictoryText = "Moor is home. Hammerfall will be finished.",
                     Tags = { "rescue", "prevent enemy objective" },
-                    Players = m => { m.AddHuman(); m.AddAI("enemy", "Saint Aurel Garrison", CA, 1, builds: true, attacks: false); m.AddAI("prisoners", "Prisoners", ID, 0, builds: false, attacks: false); m.Human.MaxTechTier = 3; },
+                    Players = m => { m.AddHuman(); m.AddAI("enemy", "Saint Aurel Garrison", CA, 1, builds: true, attacks: false); var pr = m.AddAI("prisoners", "Prisoners", ID, 0, builds: false, attacks: false); pr.IsNeutral = true; pr.IsAI = false; m.Human.MaxTechTier = 3; },
                     Populate = m =>
                     {
                         var e = m.P("enemy"); var pr = m.P("prisoners");
