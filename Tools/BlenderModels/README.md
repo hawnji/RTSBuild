@@ -19,6 +19,17 @@ reader:
 cd ../ModelCheck && dotnet run
 ```
 
+## Map scenery
+
+```
+python3 build_scenery.py                  # every scenery piece into Resources/Models/Scenery
+python3 build_scenery.py tree_pine --preview ../../Temp/scenery-previews
+```
+
+Scenery pieces (trees, bushes, rocks, mountains, cliffs, rubble, ore, bridges) live in `scenery.py`, with variant counts in
+`VARIANTS`. Pure green (0, g, 0) becomes the map theme's foliage colour and pure blue (0, 0, b) the theme's rock colour, with
+the channel kept as shading. Vertex alpha from 0.5 to 1 is how much a vertex sways in the wind; below 0.5 it glows.
+
 ## Writing models
 
 * `kit.py` holds the primitives (bevelled boxes, lofted hulls, prisms, cylinders, capsules), the exporter and the

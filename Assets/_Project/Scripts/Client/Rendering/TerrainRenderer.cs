@@ -65,6 +65,9 @@ namespace RTS.Client
         readonly int _cw, _ch;
         readonly ChunkData[] _chunks;
         readonly MeshBuilder _mb = new MeshBuilder();
+        readonly Material _groundMat;   // textured terrain material, or null for the flat vertex-colour look
+        readonly Texture2D _cellTex;
+        bool _built;
         int _scan;
 
         class ChunkData
@@ -81,21 +84,24 @@ namespace RTS.Client
             _root.SetParent(parent, false);
             _h = new TerrainHeights(m);
             TerrainHeights.Current = _h;
+            _groundMat = TerrainTextures.MaterialFor(m.Theme);
+            if (_groundMat != null) _cellTex = TerrainTextures.CreateCellTexture(m);
             _cw = (m.Width + Chunk - 1) / Chunk; _ch = (m.Height + Chunk - 1) / Chunk;
             _chunks = new ChunkData[_cw * _ch];
             for (int cy = 0; cy < _ch; cy++)
                 for (int cx = 0; cx < _cw; cx++)
                 {
                     var c = new ChunkData { X0 = cx * Chunk, Y0 = cy * Chunk };
-                    c.Ground = MakeFilter("Ground_" + cx + "_" + cy, Materials.Lit);
-                    c.Decor = MakeFilter("Decor_" + cx + "_" + cy, Materials.Lit);
-                    c.Ore = MakeFilter("Ore_" + cx + "_" + cy, Materials.Lit);
+                    c.Ground = MakeFilter("Ground_" + cx + "_" + cy, _groundMat != null ? _groundMat : Materials.Lit);
+                    c.Decor = MakeFilter("Decor_" + cx + "_" + cy, Materials.Decor);
+                    c.Ore = MakeFilter("Ore_" + cx + "_" + cy, Materials.Decor);
                     c.Water = MakeFilter("Water_" + cx + "_" + cy, Materials.Water);
                     _chunks[cy * _cw + cx] = c;
                     BuildTerrain(c);
                     BuildOre(c);
                 }
             BuildSkirt();
+            _built = true;
         }
 
         MeshFilter MakeFilter(string name, Material mat)
@@ -186,22 +192,10 @@ namespace RTS.Client
             int x1 = Mathf.Min(c.X0 + Chunk, _m.Width), y1 = Mathf.Min(c.Y0 + Chunk, _m.Height);
 
             // ---- ground
+            if (_built && _cellTex != null) TerrainTextures.UpdateCells(_cellTex, _m, c.X0, c.Y0, x1, y1);
             _mb.Clear();
-            for (int y = c.Y0; y < y1; y++)
-                for (int x = c.X0; x < x1; x++)
-                {
-                    var t = _m.Cells[y * _m.Width + x];
-                    var col = CellColor(x, y, t);
-                    if (t == Terrain.Water) col = Palette.TerrainColor(Terrain.Water, _m.Theme).Mul(0.55f);
-                    Color32 cc = col;
-                    var a = new Vector3(x, _h.Vertex(x, y), y);
-                    var b = new Vector3(x, _h.Vertex(x, y + 1), y + 1);
-                    var d = new Vector3(x + 1, _h.Vertex(x + 1, y), y);
-                    var e = new Vector3(x + 1, _h.Vertex(x + 1, y + 1), y + 1);
-                    // Split the quad along the flatter diagonal to avoid creases.
-                    if (Mathf.Abs(a.y - e.y) <= Mathf.Abs(b.y - d.y)) { Tri(a, b, e, cc); Tri(a, e, d, cc); }
-                    else { Tri(a, b, d, cc); Tri(b, e, d, cc); }
-                }
+            if (_groundMat != null) BuildGroundTextured(c, x1, y1);
+            else BuildGroundFlat(c, x1, y1);
             Assign(c.Ground, "ground");
 
             // ---- water surface
@@ -237,13 +231,17 @@ namespace RTS.Client
                             {
                                 float ox = Hash(x, y, 10 + i) * 0.8f + 0.1f, oy = Hash(x, y, 20 + i) * 0.8f + 0.1f;
                                 float s = 0.7f + Hash(x, y, 30 + i) * 0.6f;
-                                Tree(new Vector3(x + ox, _h.Sample(x + ox, y + oy), y + oy), s, Hash(x, y, 40 + i));
+                                var tp = new Vector3(x + ox, _h.Sample(x + ox, y + oy) - 0.01f, y + oy);
+                                float variant = Hash(x, y, 40 + i);
+                                if (!SceneryTree(tp, s, variant, Hash(x, y, 45 + i))) Tree(tp, s, variant);
                             }
                             break;
                         }
                         case Terrain.Rock:
                         {
                             var rc = Palette.TerrainColor(Terrain.Rock, _m.Theme);
+                            if (Piece(Hash(x, y, 2) > 0.7f ? "boulder_pile" : "rock", Hash(x, y, 50), new Vector3(x + 0.3f + Hash(x, y, 51) * 0.4f, gh - 0.03f, y + 0.3f + Hash(x, y, 52) * 0.4f),
+                                Hash(x, y, 53) * 360f, 0.9f + Hash(x, y, 54) * 0.5f, rc, rc, 0.9f + Hash(x, y, 55) * 0.2f)) break;
                             int n = 1 + (int)(Hash(x, y, 2) * 2);
                             for (int i = 0; i < n; i++)
                             {
@@ -258,6 +256,9 @@ namespace RTS.Client
                         {
                             var mc = Palette.TerrainColor(Terrain.Mountain, _m.Theme);
                             float s = 0.9f + Hash(x, y, 3) * 0.5f;
+                            bool snowy = _m.Theme == MapTheme.Winter || _m.Theme == MapTheme.Temperate && Hash(x, y, 6) > 0.6f;
+                            var mrock = snowy ? Color.Lerp(mc, new Color(0.93f, 0.95f, 0.97f), _m.Theme == MapTheme.Winter ? 0.6f : 0.3f) : mc;
+                            if (Piece("mountain", Hash(x, y, 4), new Vector3(gx, gh - 0.12f, gy), Hash(x, y, 4) * 360f, s, mrock, mrock, 0.85f + Hash(x, y, 5) * 0.2f)) break;
                             _mb.Push(new Vector3(gx, gh - 0.1f, gy), Hash(x, y, 4) * 360f);
                             _mb.Taper(Vector3.zero, new Vector3(1.2f, 0, 1.2f), new Vector3(0.35f * s, 0, 0.3f * s), 0.9f * s, mc.Mul(0.85f + Hash(x, y, 5) * 0.2f),
                                 _m.Theme == MapTheme.Winter || _m.Theme == MapTheme.Temperate && Hash(x, y, 6) > 0.6f ? new Color(0.93f, 0.95f, 0.97f) : (Color?)null);
@@ -267,6 +268,7 @@ namespace RTS.Client
                         case Terrain.Cliff:
                         {
                             var cc = Palette.TerrainColor(Terrain.Cliff, _m.Theme);
+                            if (Hash(x, y, 7) > 0.5f && Piece("cliff_rock", Hash(x, y, 8), new Vector3(gx, gh - 0.12f, gy), Hash(x, y, 8) * 360f, 1f, cc, cc, 0.85f)) break;
                             if (Hash(x, y, 7) > 0.5f)
                             {
                                 _mb.Push(new Vector3(gx, gh - 0.15f, gy), Hash(x, y, 8) * 360f);
@@ -280,6 +282,11 @@ namespace RTS.Client
                             float deck = Mathf.Max(_m.LevelAt(x, y) * Conv.LevelHeight + 0.1f, gh + 0.05f);
                             var wood = Palette.TerrainColor(Terrain.Bridge, _m.Theme);
                             bool horiz = IsBridge(x - 1, y) || IsBridge(x + 1, y) || !(IsBridge(x, y - 1) || IsBridge(x, y + 1));
+                            if (Piece("bridge_deck", 0, new Vector3(gx, deck + 0.035f, gy), horiz ? 0f : 90f, 1f, wood, wood))
+                            {
+                                if (((horiz ? x : y) & 1) == 0) Piece("bridge_pier", 0, new Vector3(gx, deck - 0.03f, gy), horiz ? 0f : 90f, 1f, wood, wood);
+                                break;
+                            }
                             _mb.Box(new Vector3(gx, deck, gy), new Vector3(1.02f, 0.12f, 1.02f), wood, wood.Mul(1.1f));
                             if (horiz)
                             {
@@ -297,6 +304,7 @@ namespace RTS.Client
                         }
                         case Terrain.Rubble:
                         {
+                            if (Piece("rubble", Hash(x, y, 100), new Vector3(gx, gh - 0.01f, gy), Hash(x, y, 101) * 360f, 1f, Color.gray, Color.gray)) break;
                             for (int i = 0; i < 3; i++)
                             {
                                 float ox = Hash(x, y, 100 + i) * 0.8f + 0.1f, oy = Hash(x, y, 110 + i) * 0.8f + 0.1f, s = 0.12f + Hash(x, y, 120 + i) * 0.2f;
@@ -308,6 +316,7 @@ namespace RTS.Client
                         }
                         case Terrain.Grass:
                         {
+                            if (SceneryGrass(x, y, gh)) break;
                             if (_m.Theme == MapTheme.Temperate && Hash(x, y, 9) > 0.93f)
                             {
                                 var bush = new Color(0.22f, 0.40f, 0.16f);
@@ -326,6 +335,67 @@ namespace RTS.Client
 
         bool IsBridge(int x, int y) => _m.Get(x, y) == Terrain.Bridge;
 
+        /// <summary>Shared-vertex grid with smooth normals; the terrain shader paints and blends the ground types.</summary>
+        void BuildGroundTextured(ChunkData c, int x1, int y1)
+        {
+            int w = x1 - c.X0 + 1;
+            for (int y = c.Y0; y <= y1; y++)
+                for (int x = c.X0; x <= x1; x++)
+                {
+                    float h = _h.Vertex(x, y);
+                    _mb.V.Add(new Vector3(x, h, y));
+                    var n = new Vector3(_h.Vertex(x - 1, y) - _h.Vertex(x + 1, y), 2f, _h.Vertex(x, y - 1) - _h.Vertex(x, y + 1));
+                    _mb.N.Add(n.normalized);
+                    // Gentle large-scale brightness variation; higher ground reads a little lighter. Stored at half scale.
+                    float k = 1f + (Mathf.PerlinNoise(x * 0.07f + _m.Seed * 0.013f, y * 0.07f) - 0.5f) * 0.16f + Mathf.Clamp(h / Conv.LevelHeight, -1f, 4f) * 0.035f;
+                    byte b = (byte)Mathf.Clamp(k * 0.5f * 255f, 0, 255);
+                    _mb.C.Add(new Color32(b, b, b, 255));
+                }
+            for (int y = c.Y0; y < y1; y++)
+                for (int x = c.X0; x < x1; x++)
+                {
+                    int a = (y - c.Y0) * w + (x - c.X0), b = a + w, d = a + 1, e = b + 1;
+                    // Split the quad along the flatter diagonal to avoid creases.
+                    if (Mathf.Abs(_mb.V[a].y - _mb.V[e].y) <= Mathf.Abs(_mb.V[b].y - _mb.V[d].y)) { Idx(a, b, e); Idx(a, e, d); }
+                    else { Idx(a, b, d); Idx(b, e, d); }
+                }
+        }
+
+        void Idx(int a, int b, int c) { _mb.T.Add(a); _mb.T.Add(b); _mb.T.Add(c); }
+
+        /// <summary>The original look: flat-shaded per-cell triangles coloured from the theme palette.</summary>
+        void BuildGroundFlat(ChunkData c, int x1, int y1)
+        {
+            for (int y = c.Y0; y < y1; y++)
+                for (int x = c.X0; x < x1; x++)
+                {
+                    var t = _m.Cells[y * _m.Width + x];
+                    var col = CellColor(x, y, t);
+                    if (t == Terrain.Water) col = Palette.TerrainColor(Terrain.Water, _m.Theme).Mul(0.55f);
+                    Color32 cc = col;
+                    var a = new Vector3(x, _h.Vertex(x, y), y);
+                    var b = new Vector3(x, _h.Vertex(x, y + 1), y + 1);
+                    var d = new Vector3(x + 1, _h.Vertex(x + 1, y), y);
+                    var e = new Vector3(x + 1, _h.Vertex(x + 1, y + 1), y + 1);
+                    if (Mathf.Abs(a.y - e.y) <= Mathf.Abs(b.y - d.y)) { Tri(a, b, e, cc); Tri(a, e, d, cc); }
+                    else { Tri(a, b, d, cc); Tri(b, e, d, cc); }
+                }
+        }
+
+        Color LeafColor(float variant)
+        {
+            switch (_m.Theme)
+            {
+                case MapTheme.Winter: return Color.Lerp(new Color(0.18f, 0.32f, 0.22f), new Color(0.85f, 0.9f, 0.92f), 0.35f + variant * 0.3f);
+                case MapTheme.Desert: return Color.Lerp(new Color(0.40f, 0.45f, 0.20f), new Color(0.30f, 0.42f, 0.18f), variant);
+                case MapTheme.Wasteland: return Color.Lerp(new Color(0.30f, 0.28f, 0.18f), new Color(0.36f, 0.30f, 0.20f), variant);
+                default: return Color.Lerp(new Color(0.14f, 0.34f, 0.12f), new Color(0.26f, 0.44f, 0.16f), variant);
+            }
+        }
+
+        bool Piece(string name, float pick, Vector3 pos, float yaw, float scale, Color leaf, Color rock, float shade = 1f)
+            => Scenery.Append(_mb, name, pick, pos, yaw, Vector3.one * scale, leaf, rock, shade);
+
         void Tri(Vector3 a, Vector3 b, Vector3 c, Color32 col)
         {
             var n = Vector3.Cross(b - a, c - a).normalized;
@@ -334,6 +404,46 @@ namespace RTS.Client
             _mb.N.Add(n); _mb.N.Add(n); _mb.N.Add(n);
             _mb.C.Add(col); _mb.C.Add(col); _mb.C.Add(col);
             _mb.T.Add(i); _mb.T.Add(i + 1); _mb.T.Add(i + 2);
+        }
+
+        /// <summary>Blender tree for the theme; false if the scenery pieces are not available.</summary>
+        bool SceneryTree(Vector3 p, float s, float variant, float pick)
+        {
+            string name;
+            switch (_m.Theme)
+            {
+                case MapTheme.Desert: name = variant > 0.35f ? "tree_palm" : "tree_broad"; break;
+                case MapTheme.Wasteland: name = variant > 0.5f ? "tree_dead" : "tree_pine"; break;
+                case MapTheme.Winter: name = "tree_pine"; break;
+                default: name = variant > 0.45f ? "tree_pine" : "tree_broad"; break;
+            }
+            return Piece(name, pick, p, pick * 360f, s, LeafColor(variant), Palette.TerrainColor(Terrain.Rock, _m.Theme), 0.9f + variant * 0.2f);
+        }
+
+        /// <summary>Scattered bushes, grass tufts and cacti on open grass. False if the scenery pieces are not available.</summary>
+        bool SceneryGrass(int x, int y, float gh)
+        {
+            if (!Scenery.Has("grass_tuft")) return false;
+            float r = Hash(x, y, 9);
+            var leaf = LeafColor(Hash(x, y, 13));
+            var p = new Vector3(x + 0.15f + Hash(x, y, 11) * 0.7f, 0, y + 0.15f + Hash(x, y, 12) * 0.7f);
+            p.y = _h.Sample(p.x, p.z) - 0.01f;
+            float yaw = Hash(x, y, 14) * 360f;
+            switch (_m.Theme)
+            {
+                case MapTheme.Desert:
+                    if (r > 0.96f) Piece("cactus", Hash(x, y, 15), p, yaw, 1f, leaf, leaf);
+                    else if (r > 0.9f) Piece("grass_tuft", Hash(x, y, 15), p, yaw, 1f, leaf.Mul(1.2f), leaf);
+                    break;
+                case MapTheme.Winter:
+                    if (r > 0.94f) Piece("grass_tuft", Hash(x, y, 15), p, yaw, 1f, leaf, leaf);
+                    break;
+                default:
+                    if (r > 0.93f) Piece("bush", Hash(x, y, 15), p, yaw, 0.9f + Hash(x, y, 16) * 0.4f, leaf, leaf);
+                    else if (r > 0.72f) Piece("grass_tuft", Hash(x, y, 15), p, yaw, 0.9f + Hash(x, y, 16) * 0.4f, leaf.Mul(1.15f), leaf);
+                    break;
+            }
+            return true;
         }
 
         void Tree(Vector3 p, float s, float variant)
@@ -375,6 +485,17 @@ namespace RTS.Client
                     int b = OreBucket(_m.Ore[i]);
                     if (b == 0) continue;
                     bool aurite = _m.OreKind[i] == 1;
+                    if (Scenery.Has(aurite ? "ore_aurite" : "ore_gold"))
+                    {
+                        var rk = Palette.TerrainColor(Terrain.Rock, _m.Theme);
+                        for (int k = 0; k < b; k++)
+                        {
+                            float ox = Hash(x, y, 200 + k) * 0.7f + 0.15f, oy = Hash(x, y, 210 + k) * 0.7f + 0.15f;
+                            var p = new Vector3(x + ox, _h.Sample(x + ox, y + oy) - 0.02f, y + oy);
+                            Piece(aurite ? "ore_aurite" : "ore_gold", Hash(x, y, 220 + k), p, Hash(x, y, 240 + k) * 360f, 0.8f + b * 0.12f + Hash(x, y, 230 + k) * 0.2f, rk, rk);
+                        }
+                        continue;
+                    }
                     var col = aurite ? new Color(0.35f, 0.85f, 0.95f) : new Color(0.80f, 0.62f, 0.22f);
                     for (int k = 0; k < b; k++)
                     {
@@ -391,6 +512,7 @@ namespace RTS.Client
             {
                 if (v.X < c.X0 || v.Y < c.Y0 || v.X >= x1 || v.Y >= y1) continue;
                 var p = new Vector3(v.X + 0.5f, _h.Sample(v.X + 0.5f, v.Y + 0.5f), v.Y + 0.5f);
+                if (Piece("ore_vent", 0, p - Vector3.up * 0.02f, (v.X * 37 + v.Y * 11) % 360, 1.2f, Color.gray, Color.gray)) continue;
                 _mb.Cylinder(p, 0.35f, 0.25f, 8, new Color(0.3f, 0.28f, 0.26f), new Color(0.15f, 0.12f, 0.1f), 0.22f);
             }
             Assign(c.Ore, "ore");

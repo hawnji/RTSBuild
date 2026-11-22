@@ -312,7 +312,7 @@ def _to_unity(v):
     return (v[0], v[2], v[1])
 
 
-def gather(info):
+def gather(info, scenery=False):
     """Collects evaluated, triangulated geometry per part, relative to each part's pivot."""
     deps = bpy.context.evaluated_depsgraph_get()
     parts = {}
@@ -351,7 +351,12 @@ def gather(info):
                 dst["t"].append(len(dst["v"]))
                 dst["v"].append(_to_unity(p))
                 dst["n"].append(_to_unity(n))
-                a = 1.0 if emit <= 0 else max(0.0, 1.0 - min(1.0, emit / 4.0))
+                if scenery:
+                    # scenery alpha: 0.5..1 = wind sway weight (1 - a) * 2, below 0.5 = glow
+                    sway = float(matl.get("rts_sway", 0.0)) if matl is not None else 0.0
+                    a = 0.5 - min(0.5, emit / 8.0) if emit > 0 else 1.0 - min(1.0, sway) * 0.5
+                else:
+                    a = 1.0 if emit <= 0 else max(0.0, 1.0 - min(1.0, emit / 4.0))
                 dst["c"].append((rgb[0], rgb[1], rgb[2], a))
         ev.to_mesh_clear()
     for p in parts.values():

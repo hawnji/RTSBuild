@@ -209,6 +209,21 @@ namespace RTS.Client
         /// <summary>Lit material for units and structures: adds a soft specular highlight and rim light.</summary>
         public static Material Unit { get { if (_unit == null) { _unit = new Material(Lit) { name = "RTS Unit", enableInstancing = true }; _unit.SetFloat("_Spec", 0.35f); _unit.SetFloat("_Rim", 0.25f); _unit.SetFloat("_VertexGlow", 1f); } return _unit; } }
 
+        static Material _decor;
+        /// <summary>Scenery: wind sway and glow from vertex alpha (RTSDecor.shader). Falls back to Lit.</summary>
+        public static Material Decor
+        {
+            get
+            {
+                if (_decor == null)
+                {
+                    var sh = Load("RTSDecor", "RTS/Decor");
+                    _decor = sh != null && sh.name == "RTS/Decor" ? new Material(sh) { name = "RTS Decor" } : Lit;
+                }
+                return _decor;
+            }
+        }
+
         static Material _litNoFog;
         public static Material LitNoFog => LitNoFogShared;
         public static Material LitNoFogShared { get { if (_litNoFog == null) { _litNoFog = new Material(Lit) { name = "RTS Lit (no fog)" }; _litNoFog.SetFloat("_FogAmount", 0f); } return _litNoFog; } }
