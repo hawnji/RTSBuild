@@ -406,7 +406,7 @@ def sandbags(P, x0, y0, x1, y1, rows=2):
         for i in range(n - (r % 2)):
             t = (i + 0.5 + 0.5 * (r % 2)) / n
             p = a.lerp(b, t)
-            box((0.07, 0.045, 0.032), (p.x, p.y, 0.1 + r * 0.03), sand, bevel=0.012, seg=2, rot=(0, 0, ang), name="sandbag")
+            box((0.07, 0.045, 0.032), (p.x, p.y, 0.1 + r * 0.03), sand, bevel=0.01, seg=1, rot=(0, 0, ang), name="sandbag")
 
 
 @model("Barracks", footprint=(2, 2))
@@ -504,3 +504,4 @@ def barracks(P, info):
 
 import vehicles  # noqa: E402,F401  (registers vehicle models)
 import air_naval  # noqa: E402,F401
+import structures  # noqa: E402,F401

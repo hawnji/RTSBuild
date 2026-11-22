@@ -52,7 +52,7 @@ namespace RTS.Client
             set { _enabled = value; PlayerPrefs.SetInt("rts_imported_models", value ? 1 : 0); ModelLibrary.ClearCache(); }
         }
 
-        static string Suffix(FactionId f) => f == FactionId.Dominion ? "_id" : "_ca";
+        static string Suffix(FactionId f) => f == FactionId.Dominion ? "_id" : f == FactionId.Neutral ? "_ne" : "_ca";
 
         static Source Find(string key, FactionId f)
         {
@@ -67,7 +67,6 @@ namespace RTS.Client
         public static bool TryUnit(UnitDef d, Color team, out ModelParts mp)
         {
             mp = null;
-            if (d.Faction == FactionId.Neutral) return false;
             var s = Find(d.Model ?? "tank_mbt", d.Faction);
             if (s == null) return false;
             mp = Build(s, team, d.Id);
@@ -77,7 +76,6 @@ namespace RTS.Client
         public static bool TryBuilding(BuildingDef d, Color team, int w, int h, out ModelParts mp)
         {
             mp = null;
-            if (d.Faction == FactionId.Neutral) return false;
             var s = Find(d.Model ?? d.Role.ToString(), d.Faction);
             if (s == null) return false;
             float rot = 0f;

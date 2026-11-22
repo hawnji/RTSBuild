@@ -25,13 +25,15 @@ foreach (var path in Directory.GetFiles(dir, "*.bytes").OrderBy(p => p))
                 float len = MathF.Sqrt(nx * nx + ny * ny + nz * nz);
                 if (float.IsNaN(len) || MathF.Abs(len - 1) > 0.02f) { issues.Add($"{p.Name}: normal {i} has length {len}"); break; }
                 float y = p.Positions[i * 3 + 1] + p.Pivot[1];
-                minY = MathF.Min(minY, y); maxY = MathF.Max(maxY, y);
-                maxXZ = MathF.Max(maxXZ, MathF.Max(MathF.Abs(p.Positions[i * 3] + p.Pivot[0]), MathF.Abs(p.Positions[i * 3 + 2] + p.Pivot[2])));
+                maxY = MathF.Max(maxY, y);
+                // The superweapon missile (Extra) starts below ground on purpose; guns and cranes may overhang.
+                if (p.Name != "Extra") minY = MathF.Min(minY, y);
+                if (p.Name == "Body") maxXZ = MathF.Max(maxXZ, MathF.Max(MathF.Abs(p.Positions[i * 3] + p.Pivot[0]), MathF.Abs(p.Positions[i * 3 + 2] + p.Pivot[2])));
                 if (p.Colors[i * 4] == 255 && p.Colors[i * 4 + 1] == 0 && p.Colors[i * 4 + 2] == 255) team = true;
             }
         }
         if (f.Parts[0].Name != "Body") issues.Add("first part is not Body");
-        if (!team) issues.Add("no team-colour vertices");
+        if (!team && !name.EndsWith("_ne")) issues.Add("no team-colour vertices");   // neutral structures have no owner colour
         if (minY < -0.05f && !f.Floating) issues.Add($"geometry below ground ({minY:0.00})");
         float limit = f.FootW > 0 ? MathF.Max(f.FootW, f.FootH) * 0.5f + 0.05f : f.Floating ? 1.45f : 1.25f;
         if (maxXZ > limit) issues.Add($"wider than expected ({maxXZ:0.00} > {limit:0.00})");

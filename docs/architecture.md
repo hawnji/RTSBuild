@@ -86,7 +86,7 @@ In missions, AI players use the same controller. Mission flags can restrict it (
 | Boot and flow | `Core/GameRoot.cs` | Created by `RuntimeInitializeOnLoadMethod`. Owns the screen state machine (menus, loading, in-game, pause, results), a background demo battle behind the menus, saving and loading, and global keys. |
 | Session | `Core/GameSession.cs` | Wraps one `World`: fixed-step accumulator with interpolation alpha, game speed, event processing into effects, audio, notifications, subtitles and minimap pings, and end-of-game detection. |
 | Rendering | `Rendering/*.cs` | `MeshBuilder` builds every mesh in code with vertex colours. `ModelLibrary` holds the procedural unit and structure models for both faction styles. `TerrainRenderer` builds chunked terrain with water, decoration and ore. `EntityViews` handles interpolation, turrets, recoil, rotors, banking and build-up and sell animations. `OverlayRenderer` draws selection, health, orders, placement ghosts and range rings. `FogTexture` feeds the fog grid to shaders. |
-| Imported models | `Rendering/Models/ImportedModels.cs`, `RtsmFile.cs` | Replace procedural models per key with Blender-built models from `Resources/Models/<key>_<ca\|id>.bytes` (made by `Tools/BlenderModels`) or with a prefab/FBX of the same name. Magenta vertices become team colour; vertex alpha below 1 glows. Keys without a file keep the procedural model. |
+| Imported models | `Rendering/Models/ImportedModels.cs`, `RtsmFile.cs` | Replace procedural models per key with Blender-built models from `Resources/Models/<key>_<ca\|id>.bytes` (made by `Tools/BlenderModels`) or with a prefab/FBX of the same name. Magenta vertices become team colour; vertex alpha below 1 glows. Keys without a file keep the procedural model. Animated pieces (walking legs, wheels, tracks, recoil, spinners, lights, flags) are driven in `EntityViews.Animate`. |
 | Effects | `Effects/FxRenderer.cs` | Batched billboard particles, tracers, projectiles and burning ground in two dynamic meshes. |
 | Camera | `Camera/RTSCamera.cs` | Orthographic isometric camera (50° pitch, 45° yaw in 90° steps), with edge, key and drag scrolling, zoom, shake, and picking by ray-marching the height field. |
 | Input | `Input/InputState.cs`, `Input/PlayerController.cs` | Input is collected from IMGUI events, so it works with either Unity input backend, and has rebindable key bindings. `PlayerController` handles selection, control groups, context orders and cursor modes. |
@@ -130,7 +130,8 @@ known limitations).
 ## Extending
 
 * **New unit or structure:** add it in `Catalog.cs` (`U(...)` / `B(...)`), add a model builder case in
-  `ModelLibrary` for its model key, and add it to the faction's list. The Field Manual, sidebar, icons and AI pick it
+  `ModelLibrary` for its model key, and add it to the faction's list. For the high-detail look, also add a Blender model for the key in
+  `Tools/BlenderModels` (see its README), run `python3 build.py <key>` and check it with `Tools/ModelCheck`. The Field Manual, sidebar, icons and AI pick it
   up automatically.
 * **New map:** add a `MapSpec` in `MapLibrary.cs`, then run `dotnet run -c Release -- maps` in `Tools/HeadlessSim` to
   check ore near each start, and `skirmish --only=<id>` to watch AIs play it.

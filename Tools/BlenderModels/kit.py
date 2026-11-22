@@ -68,6 +68,8 @@ class Palette:
         self.ca = faction != "id"
         if faction == "ca":
             hull, dark, accent = (0.66, 0.69, 0.72), (0.36, 0.39, 0.43), (0.85, 0.87, 0.90)
+        elif faction == "ne":
+            hull, dark, accent = (0.70, 0.64, 0.55), (0.40, 0.33, 0.27), (0.62, 0.25, 0.20)
         else:
             hull, dark, accent = (0.40, 0.39, 0.29), (0.24, 0.22, 0.18), (0.55, 0.32, 0.18)
         _mats.clear()
