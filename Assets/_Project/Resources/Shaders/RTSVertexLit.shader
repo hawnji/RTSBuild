@@ -23,6 +23,15 @@ Shader "RTS/VertexLit"
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
 
+            float3 ToLin(float3 c)
+            {
+            #if defined(UNITY_COLORSPACE_GAMMA)
+                return c;
+            #else
+                return GammaToLinearSpace(c);
+            #endif
+            }
+
             sampler2D _RTSFogTex;
             float4 _RTSFogParams;   // x = 1/width, y = 1/height, z = enabled
             float4 _RTSLightDir;    // towards the light
@@ -46,7 +55,7 @@ Shader "RTS/VertexLit"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.wpos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.n = UnityObjectToWorldNormal(v.normal);
-                o.color = v.color;
+                o.color = float4(ToLin(v.color.rgb), v.color.a);
                 return o;
             }
 

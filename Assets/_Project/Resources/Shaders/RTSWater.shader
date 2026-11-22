@@ -14,6 +14,15 @@ Shader "RTS/Water"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+
+            float3 ToLin(float3 c)
+            {
+            #if defined(UNITY_COLORSPACE_GAMMA)
+                return c;
+            #else
+                return GammaToLinearSpace(c);
+            #endif
+            }
             sampler2D _RTSFogTex;
             float4 _RTSFogParams;
             float4 _RTSSun;
@@ -27,7 +36,7 @@ Shader "RTS/Water"
                 wp.y += sin(wp.x * 1.3 + _Time.y * 1.4) * 0.03 + cos(wp.z * 1.1 + _Time.y) * 0.03;
                 o.pos = mul(UNITY_MATRIX_VP, wp);
                 o.wpos = wp.xyz;
-                o.color = v.color * _Tint;
+                o.color = float4(ToLin(v.color.rgb), v.color.a) * _Tint;
                 return o;
             }
             float4 frag (v2f i) : SV_Target

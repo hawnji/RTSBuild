@@ -68,8 +68,8 @@ namespace RTS.Client
                 default: amb = new Color(0.42f, 0.44f, 0.48f); sun = new Color(0.72f, 0.68f, 0.6f); break;
             }
             Shader.SetGlobalVector("_RTSLightDir", dir);
-            Shader.SetGlobalColor("_RTSAmbient", amb);
-            Shader.SetGlobalColor("_RTSSun", sun);
+            Shader.SetGlobalVector("_RTSAmbient", new Vector4(amb.r, amb.g, amb.b, 1));
+            Shader.SetGlobalVector("_RTSSun", new Vector4(sun.r, sun.g, sun.b, 1));
             RenderSettings.ambientLight = amb;
         }
     }
