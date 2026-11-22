@@ -31,12 +31,18 @@ namespace RTS.EditorTools
 
         static ProjectSetup()
         {
-            EditorApplication.delayCall += () =>
-            {
-                if (SessionState.GetBool(SessionKey, false)) return;
-                SessionState.SetBool(SessionKey, true);
-                try { RunAll(false); } catch (Exception ex) { Debug.LogWarning("[RTS] Automatic project setup failed: " + ex.Message + "\nUse RTS > Setup > Run Full Project Setup."); }
-            };
+            // Run once the editor has finished importing and compiling (delayCall can fire while an import is still running).
+            EditorApplication.update += RunWhenIdle;
+        }
+
+        static void RunWhenIdle()
+        {
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            EditorApplication.update -= RunWhenIdle;
+            if (SessionState.GetBool(SessionKey, false)) return;
+            SessionState.SetBool(SessionKey, true);
+            Debug.Log("[RTS] Running automatic project setup (Boot scene, player settings, URP)...");
+            try { RunAll(false); } catch (Exception ex) { Debug.LogWarning("[RTS] Automatic project setup failed: " + ex.Message + "\nUse RTS > Setup > Run Full Project Setup."); }
         }
 
         [MenuItem("RTS/Setup/Run Full Project Setup", priority = 0)]
@@ -97,12 +103,8 @@ namespace RTS.EditorTools
         // ------------------------------------------------------------------ URP
         static Type UrpType(string name)
         {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var t = asm.GetType("UnityEngine.Rendering.Universal." + name, false);
-                if (t != null) return t;
-            }
-            return null;
+            // URP runtime types live in this assembly; resolving by assembly-qualified name avoids scanning the AppDomain.
+            return Type.GetType("UnityEngine.Rendering.Universal." + name + ", Unity.RenderPipelines.Universal.Runtime", false);
         }
 
         [MenuItem("RTS/Setup/Install Universal Render Pipeline")]
