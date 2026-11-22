@@ -500,3 +500,6 @@ def barracks(P, info):
         flag(P, info, -0.85, 0.55, base, 0.6)
         info.height = 1.0
 
+
+
+import vehicles  # noqa: E402,F401  (registers vehicle models)
