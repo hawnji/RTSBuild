@@ -1,0 +1,14 @@
+{
+    "name": "RTS.Client",
+    "rootNamespace": "RTS.Client",
+    "references": ["RTS.Simulation"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
