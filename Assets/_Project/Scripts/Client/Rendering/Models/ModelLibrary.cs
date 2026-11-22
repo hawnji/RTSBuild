@@ -50,6 +50,7 @@ namespace RTS.Client
         {
             string key = "u|" + d.Id + "|" + colorKey;
             if (_cache.TryGetValue(key, out var mp)) return mp;
+            if (ImportedModels.TryUnit(d, team, out mp)) { _cache[key] = mp; return mp; }
             Style(d.Faction, team);
             mp = new ModelParts();
             B.Clear();
@@ -62,6 +63,7 @@ namespace RTS.Client
         {
             string key = "b|" + d.Id + "|" + colorKey + "|" + w + "x" + h;
             if (_cache.TryGetValue(key, out var mp)) return mp;
+            if (ImportedModels.TryBuilding(d, team, w, h, out mp)) { _cache[key] = mp; return mp; }
             Style(d.Faction, team);
             mp = new ModelParts();
             B.Clear();

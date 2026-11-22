@@ -205,6 +205,10 @@ namespace RTS.Client
         public static Material Additive { get { if (_add == null) _add = new Material(Load("RTSAdditive", "RTS/Additive")) { name = "RTS Additive" }; return _add; } }
         public static Material Water { get { if (_water == null) _water = new Material(Load("RTSWater", "RTS/Water")) { name = "RTS Water" }; return _water; } }
 
+        static Material _unit;
+        /// <summary>Lit material for units and structures: adds a soft specular highlight and rim light.</summary>
+        public static Material Unit { get { if (_unit == null) { _unit = new Material(Lit) { name = "RTS Unit", enableInstancing = true }; _unit.SetFloat("_Spec", 0.35f); _unit.SetFloat("_Rim", 0.25f); _unit.SetFloat("_VertexGlow", 1f); } return _unit; } }
+
         static Material _litNoFog;
         public static Material LitNoFog => LitNoFogShared;
         public static Material LitNoFogShared { get { if (_litNoFog == null) { _litNoFog = new Material(Lit) { name = "RTS Lit (no fog)" }; _litNoFog.SetFloat("_FogAmount", 0f); } return _litNoFog; } }

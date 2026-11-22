@@ -120,7 +120,7 @@ namespace RTS.Client
             go.transform.localPosition = pos;
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = Materials.Lit;
+            mr.sharedMaterial = Materials.Unit;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             mr.receiveShadows = false;
             rs.Add(mr);

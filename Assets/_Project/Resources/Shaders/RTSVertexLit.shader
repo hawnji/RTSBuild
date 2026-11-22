@@ -10,6 +10,9 @@ Shader "RTS/VertexLit"
         _Tint ("Tint", Color) = (1,1,1,1)
         _FogAmount ("Fog Of War Amount", Range(0,1)) = 1
         _Emission ("Emission", Range(0,1)) = 0
+        _Spec ("Specular", Range(0,1)) = 0
+        _Rim ("Rim Light", Range(0,1)) = 0
+        _VertexGlow ("Vertex Alpha Glow", Range(0,1)) = 0
     }
     SubShader
     {
@@ -39,6 +42,9 @@ Shader "RTS/VertexLit"
             float4 _RTSSun;
             float _FogAmount;
             float _Emission;
+            float _Spec;
+            float _Rim;
+            float _VertexGlow;
 
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Tint)
@@ -68,7 +74,18 @@ Shader "RTS/VertexLit"
                 float lam = saturate(dot(n, L));
                 float3 amb = _RTSAmbient.rgb + max(0, n.y) * 0.08;
                 float3 c = i.color.rgb * tint.rgb;
-                float3 lit = c * (amb + _RTSSun.rgb * lam) + c * _Emission;
+                // Vertex alpha below 1 marks self-lit parts (lights, glowing panels) in imported models.
+                float glow = (1 - i.color.a) * 4 * _VertexGlow;
+                float3 lit = c * (amb + _RTSSun.rgb * lam) + c * (_Emission + glow);
+                if (_Spec > 0 || _Rim > 0)
+                {
+                    float3 V = normalize(_WorldSpaceCameraPos.xyz - i.wpos);
+                    if (unity_OrthoParams.w > 0.5) V = normalize(UNITY_MATRIX_V[2].xyz);
+                    float3 H = normalize(L + V);
+                    float spec = pow(saturate(dot(n, H)), 24) * _Spec * saturate(lam * 4);
+                    float rim = pow(1 - saturate(dot(n, V)), 3) * _Rim;
+                    lit += _RTSSun.rgb * spec + (amb + _RTSSun.rgb * 0.3) * rim * c;
+                }
                 float fog = 1;
                 if (_RTSFogParams.z > 0.5) fog = tex2D(_RTSFogTex, i.wpos.xz * _RTSFogParams.xy).r;
                 lit *= lerp(1, fog, _FogAmount);

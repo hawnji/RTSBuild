@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Checks exported .bytes models with the same reader the game uses (RtsmFile.cs has no Unity dependency). -->
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><Nullable>disable</Nullable></PropertyGroup>
+  <ItemGroup><Compile Include="../../Assets/_Project/Scripts/Client/Rendering/Models/RtsmFile.cs" /></ItemGroup>
+</Project>
